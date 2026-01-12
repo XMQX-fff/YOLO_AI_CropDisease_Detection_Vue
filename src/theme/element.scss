@@ -1,0 +1,278 @@
+/* 基础组件样式 - 农业主题
+------------------------------- */
+
+// 按钮样式
+.el-button {
+  // 主按钮
+  &--primary {
+    background-color: var(--agri-color-primary);
+    border-color: var(--agri-color-primary);
+    
+    &:hover, &:focus {
+      background-color: rgba(46, 125, 50, 0.8);
+      border-color: rgba(46, 125, 50, 0.8);
+    }
+    
+    &:active {
+      background-color: rgba(46, 125, 50, 0.9);
+      border-color: rgba(46, 125, 50, 0.9);
+    }
+  }
+
+  // 成功按钮
+  &--success {
+    background-color: var(--agri-color-success);
+    border-color: var(--agri-color-success);
+    
+    &:hover, &:focus {
+      background-color: rgba(76, 175, 80, 0.8);
+      border-color: rgba(76, 175, 80, 0.8);
+    }
+  }
+
+  // 警告按钮
+  &--warning {
+    background-color: var(--agri-color-warning);
+    border-color: var(--agri-color-warning);
+    
+    &:hover, &:focus {
+      background-color: rgba(255, 152, 0, 0.8);
+      border-color: rgba(255, 152, 0, 0.8);
+    }
+  }
+
+  // 危险按钮
+  &--danger {
+    background-color: var(--agri-color-danger);
+    border-color: var(--agri-color-danger);
+    
+    &:hover, &:focus {
+      background-color: rgba(244, 67, 54, 0.8);
+      border-color: rgba(244, 67, 54, 0.8);
+    }
+  }
+}
+
+// 表单组件
+.el-form {
+  &-item {
+    &__label {
+      color: var(--agri-text-primary);
+      font-weight: 500;
+    }
+  }
+}
+
+// 输入框
+.el-input {
+  &__inner {
+    color: var(--agri-text-regular);
+    border-color: var(--agri-border-light);
+    border-radius: var(--agri-border-radius-xs);
+    
+    &:focus {
+      border-color: var(--agri-color-primary);
+      box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.1);
+    }
+  }
+}
+
+// 菜单组件
+.el-menu {
+  background-color: var(--agri-bg-card);
+  border-right: 1px solid var(--agri-border-light);
+  
+  &-item {
+    color: var(--agri-text-regular);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &:hover {
+      background-color: var(--agri-bg-hover);
+      color: var(--agri-color-primary);
+    }
+    
+    &.is-active {
+      color: var(--agri-color-primary);
+      background-color: var(--agri-bg-selected);
+      font-weight: 500;
+    }
+  }
+}
+
+// 卡片组件
+.el-card {
+  border-color: var(--agri-border-light);
+  border-radius: var(--agri-border-radius-sm);
+  box-shadow: var(--agri-box-shadow-base);
+  
+  &__header {
+    border-bottom-color: var(--agri-border-light);
+    color: var(--agri-text-primary);
+    font-weight: 600;
+    padding: 16px 20px;
+  }
+  
+  &__body {
+    padding: 20px;
+  }
+}
+
+// 表格组件
+.el-table {
+  color: var(--agri-text-regular);
+  border-radius: var(--agri-border-radius-sm);
+  overflow: hidden;
+  
+  th {
+    background-color: var(--agri-bg-hover);
+    color: var(--agri-text-primary);
+    font-weight: 600;
+  }
+  
+  tr:hover {
+    background-color: var(--agri-bg-hover);
+  }
+  
+  .el-table__row {
+    transition: background-color 0.2s ease;
+  }
+}
+
+// 标签组件
+.el-tag {
+  border-radius: var(--agri-border-radius-xs);
+  
+  &--primary {
+    background-color: var(--agri-color-primary);
+    border-color: var(--agri-color-primary);
+    color: white;
+  }
+  
+  &--success {
+    background-color: var(--agri-color-success);
+    border-color: var(--agri-color-success);
+    color: white;
+  }
+  
+  &--warning {
+    background-color: var(--agri-color-warning);
+    border-color: var(--agri-color-warning);
+    color: white;
+  }
+  
+  &--danger {
+    background-color: var(--agri-color-danger);
+    border-color: var(--agri-color-danger);
+    color: white;
+  }
+}
+
+// 消息提示
+.el-message {
+  border-radius: var(--agri-border-radius-sm);
+  box-shadow: var(--agri-box-shadow-heavy);
+  
+  &--success {
+    background-color: var(--agri-color-success);
+    border-color: var(--agri-color-success);
+  }
+  
+  &--warning {
+    background-color: var(--agri-color-warning);
+    border-color: var(--agri-color-warning);
+  }
+  
+  &--error {
+    background-color: var(--agri-color-danger);
+    border-color: var(--agri-color-danger);
+  }
+}
+
+// 加载状态
+.el-loading-spinner {
+  .path {
+    stroke: var(--agri-color-primary);
+  }
+}
+
+// 农业主题特有样式
+.agri-theme {
+  // 状态指示器
+  .status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    
+    &::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    
+    &--healthy {
+      color: var(--agri-status-healthy);
+      
+      &::before {
+        background-color: var(--agri-status-healthy);
+      }
+    }
+    
+    &--warning {
+      color: var(--agri-status-warning);
+      
+      &::before {
+        background-color: var(--agri-status-warning);
+      }
+    }
+    
+    &--danger {
+      color: var(--agri-status-danger);
+      
+      &::before {
+        background-color: var(--agri-status-danger);
+      }
+    }
+  }
+  
+  // 数据卡片
+  .data-card {
+    border-left: 4px solid var(--agri-color-primary);
+    background: var(--agri-bg-card);
+    border-radius: var(--agri-border-radius-sm);
+    padding: 16px;
+    box-shadow: var(--agri-box-shadow-light);
+    
+    &__title {
+      color: var(--agri-text-primary);
+      font-size: var(--agri-font-size-small);
+      margin-bottom: 8px;
+    }
+    
+    &__value {
+      color: var(--agri-color-primary);
+      font-family: var(--agri-font-family-data);
+      font-size: var(--agri-font-size-large);
+      font-weight: 600;
+    }
+  }
+  
+  // 农业图标
+  .agri-icon {
+    color: var(--agri-color-plant);
+    font-size: 24px;
+    
+    &--water {
+      color: var(--agri-color-water);
+    }
+    
+    &--sun {
+      color: var(--agri-color-sunlight);
+    }
+    
+    &--soil {
+      color: var(--agri-color-soil);
+    }
+  }
+}
