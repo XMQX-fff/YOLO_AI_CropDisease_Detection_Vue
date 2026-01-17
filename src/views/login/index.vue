@@ -465,8 +465,10 @@ import { onMounted } from 'vue';
 
 .login-section {
 	width: 450px;
-	background: rgba(13, 38, 13, 0.7);
-	backdrop-filter: blur(12px);
+	background: linear-gradient(rgba(13, 38, 13, 0.4), rgba(13, 38, 13, 0.3)), url('@/assets/login-bg.svg');
+	background-size: cover;
+	background-position: center;
+	backdrop-filter: blur(8px);
 	padding: 60px 50px;
 	display: flex;
 	flex-direction: column;
@@ -476,6 +478,7 @@ import { onMounted } from 'vue';
 	position: relative;
 	overflow-y: auto;
 	border-left: 1px solid rgba(46, 125, 50, 0.3);
+	border-radius: 8px;
 }
 
 .login-header {
@@ -499,57 +502,72 @@ import { onMounted } from 'vue';
 }
 
 .form-group {
-	margin-bottom: 25px;
+	margin-bottom: 28px;
 	position: relative;
+	width: 400px;
 }
 
 .login-form label {
 	display: block;
-	margin-bottom: 8px;
+	margin-bottom: 10px;
 	font-size: 0.95rem;
 	font-weight: 500;
+	color: rgba(255, 255, 255, 0.9);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .input-with-icon {
 	position: relative;
+	background: rgba(13, 38, 13, 0.4);
+	border-radius: 12px;
+	transition: all 0.3s ease;
+	backdrop-filter: blur(5px);
+}
+
+.input-with-icon:hover {
+	background: rgba(13, 38, 13, 0.5);
+	box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
 }
 
 .input-with-icon i {
 	position: absolute;
-	left: 15px;
+	left: 18px;
 	top: 50%;
 	transform: translateY(-50%);
 	color: var(--accent);
-	font-size: 18px;
+	font-size: 20px;
 	z-index: 2;
+	transition: all 0.3s ease;
 }
 
 /* 覆盖Element Plus的输入框默认样式 */
 :deep(.el-input__wrapper) {
 	width: 100%;
-	padding: 14px 20px 14px 50px;
-	background-color: rgba(13, 38, 13, 0.5) !important;
-	border: 1px solid rgba(46, 125, 50, 0.5) !important;
-	border-radius: 8px;
+	padding: 16px 22px 16px 50px;
+	background-color: transparent !important;
+	border: 1px solid rgba(46, 125, 50, 0.6) !important;
+	border-radius: 12px;
 	color: white;
 	font-size: 16px;
 	transition: all 0.3s ease;
 	position: relative;
 	z-index: 1;
 	box-shadow: none !important;
+	box-sizing: border-box;
 }
 
 :deep(.el-input__wrapper):hover {
-	border: 1px solid rgba(76, 175, 80, 0.8) !important;
-	box-shadow: 0 0 0 1px rgba(76, 175, 80, 0.3) inset !important;
+	border: 1px solid rgba(76, 175, 80, 0.9) !important;
+	box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2) inset !important;
 }
 
 :deep(.el-input__wrapper).is-focus,
 :deep(.el-input__wrapper):focus-within {
 	border: 1px solid var(--accent) !important;
 	outline: none;
-	background-color: rgba(13, 38, 13, 0.5) !important;
+	background-color: rgba(13, 38, 13, 0.3) !important;
 	box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3) !important;
+	transform: translateY(-2px);
 }
 
 /* 修复浏览器自动填充时的样式问题 */
@@ -583,17 +601,33 @@ import { onMounted } from 'vue';
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 30px;
+	padding: 0 5px;
 }
 
 .remember {
 	display: flex;
 	align-items: center;
+	cursor: pointer;
 }
 
 .remember input {
-	width: auto;
-	margin-right: 8px;
-	accent-color: var(--primary);
+	width: 18px;
+	margin-right: 10px;
+	cursor: pointer;
+}
+
+.remember input:hover {
+	transform: scale(1.1);
+}
+
+.remember label {
+	margin: 0;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.remember:hover label {
+	color: var(--accent);
 }
 
 .forgot-password {
@@ -601,31 +635,50 @@ import { onMounted } from 'vue';
 	text-decoration: none;
 	transition: all 0.3s ease;
 	font-weight: 500;
+	font-size: 0.9rem;
+	position: relative;
+	padding: 2px 0;
+}
+
+.forgot-password::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 0;
+	height: 2px;
+	background: var(--accent);
+	transition: width 0.3s ease;
 }
 
 .forgot-password:hover {
-	text-decoration: underline;
 	color: #4ddbff;
+	text-decoration: none;
+}
+
+.forgot-password:hover::after {
+	width: 100%;
 }
 
 .btn-login {
 	width: 100%;
-	padding: 15px;
+	padding: 16px;
 	background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
 	border: none;
-	border-radius: 8px;
+	border-radius: 12px;
 	color: white;
-	font-size: 16px;
+	font-size: 17px;
 	font-weight: 600;
 	cursor: pointer;
 	transition: all 0.3s ease;
-	margin-bottom: 25px;
+	margin-bottom: 28px;
 	position: relative;
 	overflow: hidden;
 	letter-spacing: 1px;
 	font-family: 'Orbitron', 'Microsoft YaHei', sans-serif;
-	box-shadow: 0 5px 15px rgba(46, 125, 50, 0.4);
+	box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
 	height: auto;
+	text-transform: uppercase;
 }
 
 .btn-login::before {
@@ -650,8 +703,9 @@ import { onMounted } from 'vue';
 
 .social-login {
 	text-align: center;
-	margin: 25px 0;
+	margin: 30px 0;
 	position: relative;
+	padding: 15px 0;
 }
 
 .social-login::before,
@@ -659,9 +713,9 @@ import { onMounted } from 'vue';
 	content: '';
 	position: absolute;
 	top: 50%;
-	width: 30%;
+	width: 35%;
 	height: 1px;
-	background: linear-gradient(90deg, transparent, var(--primary), transparent);
+	background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.6), transparent);
 }
 
 .social-login::before {
@@ -673,40 +727,79 @@ import { onMounted } from 'vue';
 }
 
 .social-login p {
-	margin-bottom: 15px;
-	color: rgba(255, 255, 255, 0.7);
+	margin-bottom: 20px;
+	color: rgba(255, 255, 255, 0.9);
+	font-size: 0.95rem;
+	position: relative;
+	z-index: 1;
+	display: inline-block;
+	padding: 8px 16px;
+	border-radius: 20px;
+	border: 1px solid rgba(76, 175, 80, 0.6);
+	background: transparent;
+	backdrop-filter: none;
+	font-weight: 500;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+	transition: all 0.3s ease;
+}
+
+.social-login p:hover {
+	border-color: var(--accent);
+	color: var(--accent);
+	transform: translateY(-2px);
 }
 
 .social-icons {
 	display: flex;
 	justify-content: center;
-	gap: 15px;
+	gap: 18px;
 }
 
 .social-icon {
-	width: 45px;
-	height: 45px;
+	width: 50px;
+	height: 50px;
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(13, 38, 13, 0.3);
+	background: rgba(13, 38, 13, 0.4);
 	color: white;
-	font-size: 18px;
+	font-size: 20px;
 	transition: all 0.3s ease;
-	border: 1px solid rgba(46, 125, 50, 0.3);
+	border: 1px solid rgba(46, 125, 50, 0.4);
+	backdrop-filter: blur(5px);
+	position: relative;
+	overflow: hidden;
+}
+
+.social-icon::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.3), transparent);
+	transition: 0.5s;
 }
 
 .social-icon:hover {
-	transform: translateY(-5px);
-	background: var(--primary);
-	box-shadow: 0 5px 15px rgba(46, 125, 50, 0.4);
+	transform: translateY(-5px) scale(1.05);
+	background: linear-gradient(135deg, var(--primary), var(--accent));
+	box-shadow: 0 8px 25px rgba(46, 125, 50, 0.5);
+	border-color: rgba(76, 175, 80, 0.8);
+}
+
+.social-icon:hover::before {
+	left: 100%;
 }
 
 .register-link {
 	text-align: center;
-	margin-top: 20px;
-	color: rgba(255, 255, 255, 0.7);
+	margin-top: 25px;
+	color: rgba(255, 255, 255, 0.8);
+	font-size: 0.95rem;
+	padding: 15px 0;
 }
 
 .register-link a {
@@ -715,11 +808,28 @@ import { onMounted } from 'vue';
 	font-weight: 600;
 	margin-left: 5px;
 	transition: all 0.3s ease;
+	position: relative;
+	padding: 3px 0;
+}
+
+.register-link a::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 0;
+	height: 2px;
+	background: var(--accent);
+	transition: width 0.3s ease;
 }
 
 .register-link a:hover {
-	text-decoration: underline;
+	text-decoration: none;
 	color: #4ddbff;
+}
+
+.register-link a:hover::after {
+	width: 100%;
 }
 
 /* 粒子动画 */

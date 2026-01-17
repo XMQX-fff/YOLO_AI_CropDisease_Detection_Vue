@@ -1,17 +1,7 @@
-// 基础变量
-@import './variables.scss';
-
-// 核心样式
 @import './app.scss';
 @import 'common/transition.scss';
-
-// 组件样式
-@import './element.scss';
-@import './waves.scss';
-
-// 主题样式
-@import './dark.scss';
 @import './other.scss';
-
-// 媒体查询
+@import './element.scss';
 @import './media/media.scss';
+@import './waves.scss';
+@import './dark.scss';

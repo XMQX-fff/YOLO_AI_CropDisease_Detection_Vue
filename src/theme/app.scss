@@ -16,31 +16,20 @@
 }
 
 :root {
-  /* 主题变量已在variables.scss中定义 */
-  /* 兼容旧变量名称 */
-  --next-color-white: var(--agri-color-white);
-  --next-bg-main-color: var(--agri-bg-base);
-  --next-bg-color: var(--agri-bg-card);
-  --next-border-color-light: var(--agri-border-light);
-  --next-color-primary-lighter: rgba(46, 125, 50, 0.1);
-  --next-color-success-lighter: rgba(76, 175, 80, 0.1);
-  --next-color-warning-lighter: rgba(255, 152, 0, 0.1);
-  --next-color-danger-lighter: rgba(244, 67, 54, 0.1);
-  --next-color-dark-hover: rgba(0, 0, 0, 0.05);
-  --next-color-menu-hover: var(--agri-bg-hover);
-  --next-color-user-hover: var(--agri-bg-hover);
-  --next-color-seting-main: var(--agri-bg-card);
-  --next-color-seting-aside: var(--agri-bg-hover);
-  --next-color-seting-header: var(--agri-text-primary);
-  
-  /* 菜单变量 */
-  --next-bg-menuBar: var(--agri-bg-card);
-  --next-bg-menuBarColor: var(--agri-text-regular);
-  --next-bg-menuBarActiveColor: var(--agri-bg-selected);
-  
-  /* 顶部栏变量 */
-  --next-bg-topBar: var(--agri-bg-card);
-  --next-bg-topBarColor: var(--agri-text-regular);
+	--next-color-white: #ffffff;
+	--next-bg-main-color: #f8f8f8;
+	--next-bg-color: #f5f5ff;
+	--next-border-color-light: #f1f2f3;
+	--next-color-primary-lighter: #ecf5ff;
+	--next-color-success-lighter: #f0f9eb;
+	--next-color-warning-lighter: #fdf6ec;
+	--next-color-danger-lighter: #fef0f0;
+	--next-color-dark-hover: #0000001a;
+	--next-color-menu-hover: rgba(0, 0, 0, 0.2);
+	--next-color-user-hover: rgba(0, 0, 0, 0.04);
+	--next-color-seting-main: #e9eef3;
+	--next-color-seting-aside: #d3dce6;
+	--next-color-seting-header: #b3c0d1;
 }
 
 html,
