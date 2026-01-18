@@ -41,6 +41,10 @@ import { ElMessage } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus';
 import request from '/@/utils/request';
 
+// 导入API
+import { useUserApi } from '/@/api/user';
+const userApi = useUserApi();
+
 const router = useRouter();
 const ruleFormRef = ref<FormInstance>();
 
@@ -78,7 +82,7 @@ const submitForm = (formEl: FormInstance | undefined) => {
 	if (!formEl) return;
 	formEl.validate((valid) => {
 		if (valid) {
-			request.post('/api/user/register', ruleForm).then((res) => {
+			userApi.register(ruleForm).then((res) => {
 				if (res.code == 0) {
 					router.push('/login');
 					ElMessage.success('注册成功！');

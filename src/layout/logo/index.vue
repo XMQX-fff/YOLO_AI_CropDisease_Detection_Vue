@@ -34,43 +34,85 @@ const onThemeConfigChange = () => {
 <style scoped lang="scss">
 .layout-logo {
 	width: 220px;
-	height: 50px;
+	height: 60px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	box-shadow: rgb(0 21 41 / 2%) 0px 1px 4px;
-	color: var(--el-color-primary);
-	font-size: 16px;
+	color: white;
+	font-size: 18px;
+	font-weight: 600;
 	cursor: pointer;
 	animation: logoAnimation 0.3s ease-in-out;
+	transition: all 0.3s ease;
+	
 	span {
 		white-space: nowrap;
 		display: inline-block;
+		background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
 	}
+	
 	&:hover {
+		transform: scale(1.05);
+		
 		span {
-			color: var(--color-primary-light-2);
+			background: linear-gradient(135deg, #ffffff 0%, #bfdbfe 100%);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			background-clip: text;
 		}
 	}
+	
 	&-medium-img {
-		width: 40px;
-		margin-right: 10px;
+		width: 45px;
+		margin-right: 12px;
+		border-radius: 10px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+		transition: all 0.3s ease;
+	}
+	
+	&:hover .layout-logo-medium-img {
+		transform: rotate(5deg) scale(1.1);
 	}
 }
+
 .layout-logo-size {
 	width: 100%;
-	height: 50px;
+	height: 60px;
 	display: flex;
 	cursor: pointer;
 	animation: logoAnimation 0.3s ease-in-out;
+	transition: all 0.3s ease;
+	
 	&-img {
-		width: 20px;
+		width: 32px;
 		margin: auto;
+		border-radius: 8px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+		transition: all 0.3s ease;
 	}
+	
 	&:hover {
+		transform: scale(1.05);
+		
 		img {
 			animation: logoAnimation 0.3s ease-in-out;
+			transform: rotate(5deg) scale(1.1);
 		}
+	}
+}
+
+@keyframes logoAnimation {
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.1);
+	}
+	100% {
+		transform: scale(1);
 	}
 }
 </style>

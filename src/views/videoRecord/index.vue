@@ -54,9 +54,11 @@ import { ElMessageBox, ElMessage } from 'element-plus';
 import request from '/@/utils/request';
 import { useUserInfo } from '/@/stores/userInfo';
 import { storeToRefs } from 'pinia';
+import { useRecordApi } from '/@/api/record';
 
 const stores = useUserInfo();
 const { userInfos } = storeToRefs(stores);
+const recordApi = useRecordApi();
 
 const state = reactive<SysRoleState>({
 	tableData: {
@@ -81,10 +83,7 @@ const getTableData = () => {
 	if (userInfos.value.userName != 'admin') {
 		state.tableData.param.search = userInfos.value.userName;
 	}
-	request
-		.get('/api/videoRecords', {
-			params: state.tableData.param,
-		})
+	recordApi.getVideoRecordList(state.tableData.param)
 		.then((res) => {
 			if (res.code == 0) {
 				state.tableData.data = [];
@@ -119,7 +118,7 @@ const onRowDel = (row: any) => {
 		type: 'warning',
 	})
 		.then(() => {
-			request.delete('/api/videoRecords/' + row.id).then((res) => {
+			recordApi.deleteVideoRecord(row.id).then((res) => {
 				if (res.code == 0) {
 					ElMessage({
 						type: 'success',
@@ -157,36 +156,172 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .system-role-container {
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+	min-height: 100vh;
+	padding: 20px;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
 	.system-role-padding {
-		padding: 15px;
+		padding: 20px;
+		background: rgba(255, 255, 255, 0.95);
+		border-radius: 16px;
+		box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(72, 187, 120, 0.2);
+		transition: all 0.3s ease;
+
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 12px 48px rgba(72, 187, 120, 0.3);
+		}
+
 		.el-table {
 			flex: 1;
+			background: rgba(255, 255, 255, 0.9);
+			border-radius: 12px;
+			border: 1px solid rgba(72, 187, 120, 0.2);
+			overflow: hidden;
+
 			:deep(.el-table__row) {
-				height: 100px;  // 进一步减小行高
-			}
-			:deep(.el-table__header) {
-				th {
-					padding: 4px 0;  // 减小表头padding
+				height: 100px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					background: rgba(72, 187, 120, 0.1);
 				}
 			}
-			:deep(.el-table__cell) {
-				padding: 2px 0;  // 减小单元格padding
+			
+			:deep(.el-table__header) {
+				th {
+					padding: 10px 0;
+					background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+					color: white;
+					font-weight: 600;
+					border-bottom: none;
+					
+					&:first-child {
+						border-top-left-radius: 12px;
+					}
+					
+					&:last-child {
+						border-top-right-radius: 12px;
+					}
+				}
 			}
+			
+			:deep(.el-table__cell) {
+				padding: 8px 0;
+				border-bottom: 1px solid rgba(72, 187, 120, 0.1);
+			}
+			
 			:deep(.cell) {
-				line-height: 1.2;  // 减小文字行高
+				line-height: 1.5;
 			}
 		}
-		:deep(.el-input) {
-			height: 32px;
-			line-height: 32px;
+
+		.system-user-search {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			margin-bottom: 20px;
+			padding: 20px;
+			background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(47, 133, 90, 0.1) 100%);
+			border-radius: 12px;
+			border: 1px solid rgba(72, 187, 120, 0.2);
+
+			:deep(.el-input) {
+				height: 40px;
+				line-height: 40px;
+				max-width: 180px;
+				
+				:deep(.el-input__wrapper) {
+					border-radius: 8px;
+					transition: all 0.3s ease;
+					
+					&:hover {
+						box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+						border-color: rgba(72, 187, 120, 0.4);
+					}
+					
+					&.is-focus {
+						border-color: #48bb78;
+						box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+					}
+				}
+			}
+
+			:deep(.el-button) {
+				border-radius: 8px;
+				transition: all 0.3s ease;
+				padding: 8px 16px;
+			}
+			
+			:deep(.el-button--primary) {
+				background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+				border: none;
+				
+				&:hover {
+					transform: translateY(-2px);
+					box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+					background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+				}
+			}
+		}
+
+		.mt15 {
+			margin-top: 20px;
+		}
+
+		:deep(.el-pagination) {
+			justify-content: center;
+			display: flex;
+			margin-top: 20px;
+
+			.is-background {
+				background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+				color: white;
+				
+				&:hover {
+					background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+				}
+			}
+
+			.is-active {
+				.is-background {
+					background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+				}
+			}
+
+			.el-pagination__sizes {
+				select {
+					border-radius: 6px;
+					border-color: rgba(72, 187, 120, 0.3);
+					
+					&:hover {
+						border-color: #48bb78;
+					}
+				}
+			}
 		}
 	}
 }
 
 .video {
 	width: 100%;
-	max-height: 80px;  // 减小视频最大高度
+	max-height: 80px;
 	height: auto;
 	object-fit: contain;
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+	
+	&:hover {
+		transform: scale(1.02);
+		box-shadow: 0 6px 16px rgba(72, 187, 120, 0.3);
+	}
+}
+
+.mb15 {
+	margin-bottom: 20px;
 }
 </style>

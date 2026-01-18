@@ -48,6 +48,10 @@ import { useUserInfo } from '/@/stores/userInfo';
 import { storeToRefs } from 'pinia';
 import type { UploadInstance, UploadProps } from 'element-plus';
 import { SocketService } from '/@/utils/socket';
+
+// 导入API
+import { usePredictApi } from '/@/api/predict';
+const predictApi = usePredictApi();
 import { formatDate } from '/@/utils/formatTime';
 
 const stores = useUserInfo();
@@ -138,7 +142,7 @@ socketService.on('progress', (data) => {
 });
 
 const getData = () => {
-	request.get('/api/flask/file_names').then((res) => {
+	predictApi.getFileNames().then((res) => {
 		if (res.code == 0) {
 			res.data = JSON.parse(res.data);
 			state.weight_items = res.data.weight_items.filter(item => item.value.includes(kind.value));
@@ -162,7 +166,7 @@ const start = () => {
 };
 
 const stop = () => {
-	request.get('/flask/stopCamera').then((res) => {
+	predictApi.stopCamera().then((res) => {
 		if (res.code == 0) {
 			res.data = JSON.parse(res.data);
 			console.log(res.data);
@@ -182,47 +186,132 @@ onMounted(() => {
 <style scoped lang="scss">
 .system-predict-container {
 	width: 100%;
-	height: 100%;
+	height: 100vh;
 	display: flex;
 	flex-direction: column;
+	overflow-y: auto;
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+	padding: 20px;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
 	.system-predict-padding {
-		padding: 15px;
-
-		.el-table {
-			flex: 1;
+		padding: 20px;
+		min-height: calc(100vh - 40px);
+		background: rgba(255, 255, 255, 0.95);
+		border-radius: 16px;
+		box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(72, 187, 120, 0.2);
+		transition: all 0.3s ease;
+		
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 12px 48px rgba(72, 187, 120, 0.3);
 		}
 	}
 }
 
 .header {
 	width: 100%;
-	height: 5%;
 	display: flex;
-	justify-content: start;
 	align-items: center;
-	font-size: 20px;
+	flex-wrap: wrap;
+	gap: 20px;
+	margin-bottom: 20px;
+	background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(47, 133, 90, 0.1) 100%);
+	padding: 20px;
+	border-radius: 12px;
+	border: 1px solid rgba(72, 187, 120, 0.2);
+	transition: all 0.3s ease;
+	
+	.el-select {
+		width: 180px;
+		
+		:deep(.el-select__wrapper) {
+			border-radius: 8px;
+			transition: all 0.3s ease;
+			
+			&:hover {
+				box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+				border-color: rgba(72, 187, 120, 0.4);
+			}
+			
+			&.is-focus {
+				border-color: #48bb78;
+				box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+			}
+		}
+	}
+	
+	.conf {
+		margin-left: 20px;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		
+		> div:first-child {
+			font-size: 14px;
+			margin-right: 20px;
+			display: flex;
+			justify-content: start;
+			align-items: center;
+			color: #4a5568;
+			font-weight: 500;
+		}
+		
+		.el-slider {
+			width: 280px;
+			
+			:deep(.el-slider__button) {
+				background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+				border-color: #48bb78;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					transform: scale(1.1);
+				}
+			}
+			
+			:deep(.el-slider__bar) {
+				background: linear-gradient(90deg, #48bb78 0%, #2f855a 100%);
+			}
+			
+			:deep(.el-slider__runway) {
+				background: rgba(72, 187, 120, 0.2);
+			}
+		}
+	}
 }
 
 .cards {
 	width: 100%;
-	height: 95%;
-	border-radius: 5px;
-	margin-top: 15px;
-	padding: 0px;
+	min-height: 600px;
+	border-radius: 16px;
+	margin-top: 20px;
+	padding: 20px;
 	overflow: hidden;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	/* 防止视频溢出 */
+	background: rgba(255, 255, 255, 0.95);
+	box-shadow: 0 4px 16px rgba(72, 187, 120, 0.15);
+	border: 1px solid rgba(72, 187, 120, 0.2);
+	transition: all 0.3s ease;
+	
+	&:hover {
+		transform: translateY(-4px);
+		box-shadow: 0 8px 24px rgba(72, 187, 120, 0.3);
+	}
 }
 
 .video {
 	width: 100%;
 	max-height: 100%;
-	/* 限制视频最大高度不超过父元素高度 */
 	height: auto;
 	object-fit: contain;
+	border-radius: 12px;
+	box-shadow: 0 4px 16px rgba(72, 187, 120, 0.2);
+	transition: all 0.3s ease;
 }
 
 .button-section {
@@ -232,11 +321,41 @@ onMounted(() => {
 
 .predict-button {
 	width: 100%;
-	/* 按钮宽度填满 */
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+	border: none;
+	box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+	transition: all 0.3s ease;
+	padding: 10px 24px;
+	font-size: 16px;
+	font-weight: 500;
+	border-radius: 8px;
+	
+	&:hover {
+		transform: translateY(-3px);
+		box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+		background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+	}
+	
+	&:active {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+	}
 }
 
-.demo-progress .el-progress--line {
+.demo-progress {
 	margin-left: 20px;
-	width: 600px;
+	
+	.el-progress--line {
+		width: 380px;
+		
+		:deep(.el-progress-bar__inner) {
+			background: linear-gradient(90deg, #48bb78 0%, #2f855a 100%);
+		}
+		
+		:deep(.el-progress__text) {
+			color: #2f855a;
+			font-weight: 500;
+		}
+	}
 }
 </style>

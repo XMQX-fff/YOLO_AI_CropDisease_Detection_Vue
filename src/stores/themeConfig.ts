@@ -17,7 +17,7 @@ export const useThemeConfig = defineStore('themeConfig', {
 			 * 全局主题
 			 */
 			// 默认 primary 主题颜色
-			primary: '#409eff',
+			primary: '#48bb78',
 			// 是否开启深色模式
 			isIsDark: false,
 
@@ -35,11 +35,11 @@ export const useThemeConfig = defineStore('themeConfig', {
 			 * 菜单设置
 			 */
 			// 默认菜单导航背景颜色
-			menuBar: '#d1e4f8',
+			menuBar: '#d1f7e0',
 			// 默认菜单导航字体颜色
 			menuBarColor: '#000000',
 			// 默认菜单高亮背景色
-			menuBarActiveColor: '#fff',
+			menuBarActiveColor: '#48bb78',
 			// 是否开启菜单背景颜色渐变
 			isMenuBarColorGradual: false,
 

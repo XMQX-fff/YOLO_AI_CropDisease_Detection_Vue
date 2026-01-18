@@ -110,6 +110,10 @@ import { useUserInfo } from '/@/stores/userInfo';
 import { storeToRefs } from 'pinia';
 import { Plus, Check, User, Lock, UserFilled, Message, Phone } from '@element-plus/icons-vue';
 
+// 导入API
+import { useUserApi } from '/@/api/user';
+const userApi = useUserApi();
+
 const imageUrl = ref('');
 const uploadFile = ref<UploadInstance>();
 const formRef = ref<FormInstance>();
@@ -153,7 +157,7 @@ const stores = useUserInfo();
 const { userInfos } = storeToRefs(stores);
 
 const getTableData = () => {
-	request.get('/api/user/' + userInfos.value.userName).then((res) => {
+	userApi.getUserDetail(userInfos.value.userName).then((res) => {
 		if (res.code == 0) {
 			state.form = res.data;
 			if (state.form['role'] == 'admin') {
@@ -194,7 +198,7 @@ const upData = () => {
 	} else if (state.form['role'] == '其他用户') {
 		state.form['role'] = 'others';
 	}
-	request.post('/api/user/update', state.form).then((res) => {
+	userApi.updateUser(state.form).then((res) => {
 		if (res.code == 0) {
 			ElMessage.success('修改成功！');
 		} else {
@@ -218,7 +222,7 @@ onMounted(() => {
 .personal-container {
 	height: calc(100vh - 60px);
 	padding-top: 32px;
-	background-color: #f5f7fa;
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
 	overflow: hidden;
 
 	.personal-wrapper {
@@ -234,12 +238,20 @@ onMounted(() => {
 
 			.left-section {
 				.avatar-card {
-					background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+					background: rgba(255, 255, 255, 0.95);
 					border-radius: 16px;
 					padding: 40px 32px;
 					text-align: center;
 					height: fit-content;
-					box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+					box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+					backdrop-filter: blur(10px);
+					border: 1px solid rgba(72, 187, 120, 0.2);
+					transition: all 0.3s ease;
+					
+					&:hover {
+						transform: translateY(-2px);
+						box-shadow: 0 12px 48px rgba(72, 187, 120, 0.3);
+					}
 
 					.avatar-wrapper {
 						margin-bottom: 24px;
@@ -253,13 +265,13 @@ onMounted(() => {
 								overflow: hidden;
 								cursor: pointer;
 								transition: all 0.3s ease;
-								background: #f5f7fa;
+								background: #f0fff4;
 								border: 3px solid #fff;
-								box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+								box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
 
 								&:hover {
 									transform: translateY(-2px);
-									box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+									box-shadow: 0 6px 16px rgba(72, 187, 120, 0.3);
 								}
 
 								.avatar-image {
@@ -274,11 +286,12 @@ onMounted(() => {
 									flex-direction: column;
 									justify-content: center;
 									align-items: center;
-									color: #909399;
+									color: #4a5568;
 
 									.upload-icon {
 										font-size: 36px;
 										margin-bottom: 12px;
+										color: #48bb78;
 									}
 
 									span {
@@ -291,33 +304,42 @@ onMounted(() => {
 
 					.welcome-text {
 						font-size: 20px;
-						color: #2c3e50;
+						color: #2d3748;
 						margin: 0 0 16px;
 						font-weight: 600;
 					}
 
 					.user-role {
 						font-size: 15px;
-						color: #409eff;
+						color: #2f855a;
 						font-weight: 500;
 						padding: 8px 20px;
-						background: rgba(64, 158, 255, 0.1);
+						background: rgba(72, 187, 120, 0.1);
 						border-radius: 20px;
 						display: inline-block;
+						border: 1px solid rgba(72, 187, 120, 0.3);
 					}
 				}
 			}
 
 			.right-section {
 				.info-card {
-					background: #ffffff;
+					background: rgba(255, 255, 255, 0.95);
 					border-radius: 16px;
 					padding: 40px;
-					box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+					box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+					backdrop-filter: blur(10px);
+					border: 1px solid rgba(72, 187, 120, 0.2);
+					transition: all 0.3s ease;
+					
+					&:hover {
+						transform: translateY(-2px);
+						box-shadow: 0 12px 48px rgba(72, 187, 120, 0.3);
+					}
 
 					.section-title {
 						font-size: 24px;
-						color: #2c3e50;
+						color: #2d3748;
 						margin: 0 0 32px;
 						font-weight: 600;
 					}
@@ -333,7 +355,7 @@ onMounted(() => {
 
 								.el-form-item__label {
 									font-weight: 500;
-									color: #2c3e50;
+									color: #2d3748;
 								}
 
 								.el-input__wrapper {
@@ -345,12 +367,12 @@ onMounted(() => {
 
 									&:hover,
 									&.is-focus {
-										box-shadow: 0 0 0 1px #409eff inset;
+										box-shadow: 0 0 0 1px #48bb78 inset;
 									}
 
 									.el-input__prefix {
 										margin-right: 8px;
-										color: #909399;
+										color: #48bb78;
 									}
 								}
 
@@ -361,11 +383,11 @@ onMounted(() => {
 											box-shadow: 0 0 0 1px #e4e7ed inset !important;
 											
 											&:hover {
-												box-shadow: 0 0 0 1px #409eff inset !important;
+												box-shadow: 0 0 0 1px #48bb78 inset !important;
 											}
 											
 											&.is-focus {
-												box-shadow: 0 0 0 1px #409eff inset !important;
+												box-shadow: 0 0 0 1px #48bb78 inset !important;
 											}
 										}
 									}
@@ -381,13 +403,13 @@ onMounted(() => {
 								padding: 12px 36px;
 								font-size: 15px;
 								border-radius: 8px;
-								background: linear-gradient(135deg, #409eff, #36a2f1);
+								background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
 								border: none;
 								transition: all 0.3s ease;
 
 								&:hover {
 									transform: translateY(-2px);
-									box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+									box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
 								}
 							}
 						}

@@ -101,7 +101,11 @@ onUnmounted(() => {
 	height: 50px;
 	display: flex;
 	align-items: center;
-	background: var(--next-bg-topBar);
-	border-bottom: 1px solid var(--next-border-color-light);
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+	color: white;
+	box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+	transition: all 0.3s ease;
+	position: relative;
+	z-index: 100;
 }
 </style>

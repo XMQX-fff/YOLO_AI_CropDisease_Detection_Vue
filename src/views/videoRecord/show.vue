@@ -58,6 +58,10 @@ import { ElMessage } from 'element-plus';
 import request from '/@/utils/request';
 import { useRoute } from 'vue-router';
 
+// 导入API
+import { useRecordApi } from '/@/api/record';
+const recordApi = useRecordApi();
+
 const route = useRoute();
 const leftWidth = ref(50); // 左侧 div 初始宽度
 const state = reactive({
@@ -66,7 +70,7 @@ const state = reactive({
 });
 
 const getData = () => {
-	request.get('/api/videoRecords/' + state.id).then((res) => {
+	recordApi.getVideoRecordDetail(state.id).then((res) => {
 		if (res.code == 0) {
 			// res.data = JSON.parse(res.data);
 			state.form = res.data;
@@ -133,21 +137,27 @@ onMounted(() => {
 <style scoped lang="scss">
 .system-predict-container {
 	width: 100%;
-	height: 100%;
+	height: 100vh;
 	display: flex;
 	flex-direction: column;
-	background-color: #f5f7fa; /* 浅灰色背景 */
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+	padding: 20px;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
 	.system-predict-padding {
 		padding: 20px;
 		width: 100%;
 		height: 100%;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 轻微阴影 */
-		border-radius: 8px;
-		background: #fff; /* 白色背景 */
-
-		.el-table {
-			flex: 1;
+		background: rgba(255, 255, 255, 0.95);
+		border-radius: 16px;
+		box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(72, 187, 120, 0.2);
+		transition: all 0.3s ease;
+		
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 12px 48px rgba(72, 187, 120, 0.3);
 		}
 	}
 }
@@ -158,37 +168,88 @@ onMounted(() => {
 	display: flex;
 	justify-content: start;
 	align-items: center;
-	gap: 20px; /* 等距对齐 */
-	padding-bottom: 10px;
-	border-bottom: 2px solid #e0e0e0; /* 分割线 */
+	gap: 20px;
+	padding: 20px;
+	margin-bottom: 20px;
+	background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(47, 133, 90, 0.1) 100%);
+	border-radius: 12px;
+	border: 1px solid rgba(72, 187, 120, 0.2);
 	font-size: 14px;
+	flex-wrap: wrap;
 
+	.kind,
 	.model,
-	.height,
+	.count,
 	.username,
 	.startTime {
 		display: flex;
 		align-items: center;
+		gap: 10px;
 
 		text {
-			// font-weight: bold;
-			color: #333;
-			margin-right: 5px;
+			font-weight: 600;
+			color: #2f855a;
 		}
+		
+		.el-input {
+			:deep(.el-input__wrapper) {
+				border-radius: 8px;
+				transition: all 0.3s ease;
+				border-color: rgba(72, 187, 120, 0.3);
+				
+				&:hover {
+					box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+					border-color: rgba(72, 187, 120, 0.4);
+				}
+				
+				&.is-focus,
+				&:focus-within {
+					border-color: #48bb78;
+					box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+				}
+			}
+		}
+	}
+	
+	.button-section {
+		margin-left: auto;
+	}
+}
+
+.predict-button {
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+	border: none;
+	box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+	transition: all 0.3s ease;
+	padding: 10px 24px;
+	font-size: 16px;
+	font-weight: 500;
+	border-radius: 8px;
+	
+	&:hover {
+		transform: translateY(-3px);
+		box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+		background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+	}
+	
+	&:active {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
 	}
 }
 
 .cards {
 	width: 100%;
-	height: calc(100% - 50px); /* 减去 header 高度 */
-	border-radius: 8px;
+	height: calc(100% - 100px); /* 减去 header 高度 */
+	border-radius: 12px;
 	margin-top: 15px;
-	padding: 0px;
+	padding: 0;
 	display: flex;
 	flex-direction: row;
 	overflow: hidden;
-	background-color: #ffffff; /* 白色背景 */
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 卡片阴影 */
+	background-color: rgba(255, 255, 255, 0.9);
+	box-shadow: 0 4px 16px rgba(72, 187, 120, 0.2);
+	border: 1px solid rgba(72, 187, 120, 0.2);
 }
 
 .left,
@@ -199,33 +260,46 @@ onMounted(() => {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	background: radial-gradient(circle, #d3e3f1 0%, #ffffff 100%);
-	border-radius: 8px;
-	border: 1px solid #e0e0e0; /* 边框 */
-	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05); /* 内部阴影 */
+	background: radial-gradient(circle, rgba(72, 187, 120, 0.1) 0%, rgba(255, 255, 255, 0.95) 100%);
+	border-radius: 12px;
+	border: 1px solid rgba(72, 187, 120, 0.2);
+	box-shadow: inset 0 2px 8px rgba(72, 187, 120, 0.1);
+	transition: all 0.3s ease;
+	
+	&:hover {
+		box-shadow: inset 0 4px 12px rgba(72, 187, 120, 0.15);
+	}
 }
 
 .video {
-	width: 100%;
-	max-height: 100%;
+	width: 95%;
+	max-height: 95%;
 	height: auto;
 	object-fit: contain;
-	border-radius: 8px; /* 圆角视频 */
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 视频阴影 */
+	border-radius: 12px;
+	box-shadow: 0 4px 16px rgba(72, 187, 120, 0.3);
+	transition: all 0.3s ease;
+	
+	&:hover {
+		transform: scale(1.01);
+		box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+	}
 }
 
 /* 分割条样式 */
 .splitter {
 	cursor: ew-resize;
-	width: 3px; /* 加宽分割条 */
-	background: linear-gradient(to bottom, #d3e3f1, #a7bdd8);
+	width: 3px;
+	background: linear-gradient(to bottom, #48bb78, #2f855a);
 	border-left: none;
 	height: 100%;
 	transition: all 0.3s ease;
+	border-radius: 2px;
 
 	&:hover {
-		background: linear-gradient(to bottom, #a7bdd8, #d3e3f1);
-		box-shadow: 0 0 8px rgba(0, 0, 0, 0.2); /* 高亮效果 */
+		background: linear-gradient(to bottom, #2f855a, #48bb78);
+		box-shadow: 0 0 12px rgba(72, 187, 120, 0.5);
+		transform: scaleX(1.5);
 	}
 }
 

@@ -111,6 +111,10 @@ import { ElMessage } from 'element-plus';
 import type { FormInstance } from 'element-plus';
 import request from '/@/utils/request';
 
+// 导入API
+import { useGreenhouseApi } from '/@/api/greenhouse';
+const greenhouseApi = useGreenhouseApi();
+
 // 定义子组件向父组件传值/事件
 const emit = defineEmits(['refresh']);
 
@@ -210,7 +214,7 @@ const onSubmit = () => {
 	greenhouseDialogFormRef.value.validate((valid: boolean) => {
 		if (valid) {
 			if (state.dialog.title === '修改温室信息') {
-				request.post('/api/greenhouse/update', state.form).then((res) => {
+				greenhouseApi.updateGreenhouse(state.form).then((res) => {
 					if (res.code == 0) {
 						ElMessage.success('修改成功！');
 						closeDialog();
@@ -223,7 +227,7 @@ const onSubmit = () => {
 					}
 				});
 			} else {
-				request.post('/api/greenhouse', state.form).then((res) => {
+				greenhouseApi.addGreenhouse(state.form).then((res) => {
 					if (res.code == 0) {
 						ElMessage.success('添加成功！');
 						closeDialog();
@@ -252,15 +256,56 @@ defineExpose({
 :deep(.dia) {
 	.el-dialog {
 		margin-top: 8vh !important;
-		.el-dialog__body {
-			padding: 15px 20px;
-		}
+		background: rgba(255, 255, 255, 0.95);
+		border-radius: 16px;
+		box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(72, 187, 120, 0.2);
+	
 		.el-dialog__header {
-			padding: 15px 20px;
+			padding: 20px;
 			margin-right: 0;
+			background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+			border-top-left-radius: 16px;
+			border-top-right-radius: 16px;
+			
+			.el-dialog__title {
+				color: white;
+				font-weight: 500;
+			}
+			
+			.el-dialog__headerbtn {
+				.el-icon {
+					color: white;
+					font-size: 18px;
+					transition: all 0.3s ease;
+					
+					&:hover {
+						transform: rotate(90deg);
+						color: white;
+						opacity: 1;
+					}
+				}
+			}
 		}
+		
+		.el-dialog__body {
+			padding: 20px;
+			background: rgba(255, 255, 255, 0.9);
+		}
+		
 		.el-dialog__footer {
-			padding: 15px 20px;
+			padding: 20px;
+			background: rgba(255, 255, 255, 0.9);
+			border-bottom-left-radius: 16px;
+			border-bottom-right-radius: 16px;
+			border-top: 1px solid rgba(72, 187, 120, 0.1);
+			
+			.dialog-footer {
+				display: flex;
+				justify-content: center;
+				gap: 12px;
+			}
 		}
 	}
 }
@@ -268,9 +313,120 @@ defineExpose({
 .el-form {
 	width: 100%;
 	margin: 0;
+	
+	:deep(.el-form-item) {
+		margin-bottom: 20px;
+		
+		.el-form-item__label {
+			font-weight: 500;
+			color: #2d3748;
+		}
+		
+		.el-input {
+			.el-input__wrapper {
+				border-radius: 8px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+					border-color: rgba(72, 187, 120, 0.4);
+				}
+				
+				&.is-focus {
+					border-color: #48bb78;
+					box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+				}
+			}
+		}
+		
+		.el-input-number {
+			.el-input__wrapper {
+				border-radius: 8px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+					border-color: rgba(72, 187, 120, 0.4);
+				}
+				
+				&.is-focus {
+					border-color: #48bb78;
+					box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+				}
+			}
+		}
+		
+		.el-date-editor {
+			.el-input__wrapper {
+				border-radius: 8px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+					border-color: rgba(72, 187, 120, 0.4);
+				}
+				
+				&.is-focus {
+					border-color: #48bb78;
+					box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+				}
+			}
+		}
+		
+		.el-select {
+			.el-input__wrapper {
+				border-radius: 8px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+					border-color: rgba(72, 187, 120, 0.4);
+				}
+				
+				&.is-focus {
+					border-color: #48bb78;
+					box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+				}
+			}
+		}
+	}
+}
+
+.el-button {
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	padding: 8px 20px;
+	font-weight: 500;
+	
+	&:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+	}
+	
+	&--primary {
+		background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+		border: none;
+		
+		&:hover {
+			background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+			box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+		}
+	}
+	
+	&--default {
+		background: rgba(255, 255, 255, 0.8);
+		border: 1px solid rgba(72, 187, 120, 0.3);
+		color: #4a5568;
+		
+		&:hover {
+			background: rgba(72, 187, 120, 0.1);
+			border-color: #48bb78;
+			color: #2f855a;
+		}
+	}
 }
 
 .mb15 {
-	margin-bottom: 15px;
+	margin-bottom: 20px;
 }
 </style>

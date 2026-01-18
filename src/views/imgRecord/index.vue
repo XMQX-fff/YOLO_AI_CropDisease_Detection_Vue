@@ -45,9 +45,9 @@
 				<el-table-column prop="allTime" label="总用时" show-overflow-tooltip align="center"></el-table-column>
 				<el-table-column prop="startTime" label="识别时间" width="200" align="center" />
 				<el-table-column prop="username" label="识别用户" show-overflow-tooltip align="center"></el-table-column>
-				<el-table-column label="操作" width="80">
+				<el-table-column label="操作" width="100" fixed="right" align="center">
 					<template #default="scope">
-						<el-button size="small" text type="primary" @click="onRowDel(scope.row)">删除</el-button>
+						<el-button size="small" type="danger" @click="onRowDel(scope.row)">删除</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -66,9 +66,11 @@ import { ElMessageBox, ElMessage } from 'element-plus';
 import request from '/@/utils/request';
 import { useUserInfo } from '/@/stores/userInfo';
 import { storeToRefs } from 'pinia';
+import { useRecordApi } from '/@/api/record';
 
 const stores = useUserInfo();
 const { userInfos } = storeToRefs(stores);
+const recordApi = useRecordApi();
 
 const state = reactive({
 	tableData: {
@@ -90,10 +92,7 @@ const getTableData = () => {
 	if (userInfos.value.userName != 'admin') {
 		state.tableData.param.search = userInfos.value.userName;
 	}
-	request
-		.get('/api/imgRecords', {
-			params: state.tableData.param,
-		})
+	recordApi.getImgRecordList(state.tableData.param)
 		.then((res) => {
 			if (res.code == 0) {
 				state.tableData.data = [];
@@ -150,7 +149,7 @@ const onRowDel = (row: any) => {
 	})
 		.then(() => {
 			console.log(row);
-			request.delete('/api/imgRecords/' + row.id).then((res) => {
+			recordApi.deleteImgRecord(row.id).then((res) => {
 				if (res.code == 0) {
 					console.log(res.data);
 					ElMessage({
@@ -189,40 +188,266 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .system-role-container {
+	width: 100%;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+	padding: 20px;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
 	.system-role-padding {
-		padding: 15px;
+		padding: 20px;
+		min-height: calc(100vh - 40px);
+		background: rgba(255, 255, 255, 0.95);
+		border-radius: 16px;
+		box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(72, 187, 120, 0.2);
+		transition: all 0.3s ease;
+		
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 12px 48px rgba(72, 187, 120, 0.3);
+		}
+
 		.el-table {
 			flex: 1;
+			background: rgba(255, 255, 255, 0.9);
+			border-radius: 12px;
+			border: 1px solid rgba(72, 187, 120, 0.2);
+			overflow: hidden;
+			
 			:deep(.el-table__row) {
-				height: 70px;  // 设置行高
-			}
-			:deep(.el-table__header) {
-				th {
-					padding: 6px 0;  // 减小表头padding
+				height: 90px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					background: rgba(72, 187, 120, 0.1);
 				}
 			}
-			:deep(.el-table__cell) {
-				padding: 3px 0;  // 减小单元格padding
+			
+			:deep(.el-table__header) {
+				th {
+					padding: 10px 0;
+					background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+					color: white;
+					font-weight: 600;
+					border-bottom: none;
+				}
 			}
+			
+			:deep(.el-table__cell) {
+				padding: 8px 0;
+				border-bottom: 1px solid rgba(72, 187, 120, 0.1);
+			}
+			
 			:deep(.cell) {
-				line-height: 1.3;  // 减小文字行高
+				line-height: 1.5;
+			}
+			
+			:deep(.el-table__expand-icon) {
+				color: #48bb78;
+				
+				&:hover {
+					color: #2f855a;
+				}
 			}
 		}
+		
 		:deep(.el-input) {
-			height: 32px;
-			line-height: 32px;
+			height: 40px;
+			line-height: 40px;
+			max-width: 180px;
+			
+			:deep(.el-input__wrapper) {
+				border-radius: 8px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+					border-color: rgba(72, 187, 120, 0.4);
+				}
+				
+				&.is-focus {
+					border-color: #48bb78;
+					box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+				}
+			}
+		}
+		
+		:deep(.el-button) {
+			border-radius: 8px;
+			transition: all 0.3s ease;
+			padding: 8px 16px;
+		}
+		
+		:deep(.el-button--primary) {
+			background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+			border: none;
+			
+			&:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 16px rgba(49, 130, 206, 0.4);
+				background: linear-gradient(135deg, #2b6cb0 0%, #3182ce 100%);
+			}
+		}
+		
+		:deep(.el-button--danger) {
+			background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+			border: none;
+			
+			&:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 16px rgba(229, 62, 62, 0.4);
+				background: linear-gradient(135deg, #c53030 0%, #e53e3e 100%);
+			}
+		}
+		
+		:deep(.el-button--text) {
+			color: #48bb78;
+			
+			&:hover {
+				color: #2f855a;
+				background: rgba(72, 187, 120, 0.1);
+			}
+		}
+		
+		:deep(.el-pagination) {
+			.el-pagination__sizes .el-input .el-input__wrapper {
+				border-radius: 8px;
+			}
+			
+			.el-pager li {
+				border-radius: 4px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					background: rgba(72, 187, 120, 0.1);
+				}
+				
+				&.active {
+					background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+					color: white;
+				}
+			}
+			
+			.btn-prev,
+			.btn-next {
+				border-radius: 4px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					background: rgba(72, 187, 120, 0.1);
+				}
+			}
+		}
+	}
+}
+
+// 图片样式
+img {
+	border-radius: 8px;
+	box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+	transition: all 0.3s ease;
+	
+	&:hover {
+		transform: scale(1.05);
+		box-shadow: 0 6px 16px rgba(72, 187, 120, 0.3);
+	}
+}
+
+// 搜索区域样式
+.system-user-search {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 20px;
+	padding: 20px;
+	background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(47, 133, 90, 0.1) 100%);
+	border-radius: 12px;
+	border: 1px solid rgba(72, 187, 120, 0.2);
+
+	:deep(.el-input) {
+		height: 40px;
+		line-height: 40px;
+		max-width: 180px;
+		
+		:deep(.el-input__wrapper) {
+			border-radius: 8px;
+			transition: all 0.3s ease;
+			
+			&:hover {
+				box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+				border-color: rgba(72, 187, 120, 0.4);
+			}
+			
+			&.is-focus {
+				border-color: #48bb78;
+				box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+			}
+		}
+	}
+
+	:deep(.el-button) {
+		border-radius: 8px;
+		transition: all 0.3s ease;
+		padding: 8px 16px;
+	}
+	
+	:deep(.el-button--primary) {
+		background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+		border: none;
+		
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+			background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
 		}
 	}
 }
 
 // 展开行的样式
 :deep(.el-table__expanded-cell) {
-	padding: 10px !important;
+	padding: 20px !important;
+	background: rgba(72, 187, 120, 0.05);
+	
 	.el-table {
-		margin-top: 5px;
-		.el-table__row {
-			height: 40px !important;  // 设置展开行的表格行高
+		margin-top: 10px;
+		border-radius: 8px;
+		overflow: hidden;
+		
+		.el-table__header-wrapper {
+			background: linear-gradient(135deg, rgba(72, 187, 120, 0.8) 0%, rgba(47, 133, 90, 0.8) 100%);
+			
+			th {
+				padding: 8px 0;
+				color: white;
+				font-weight: 500;
+			}
+		}
+		
+		.el-table__body-wrapper .el-table__row {
+			height: 50px !important;
+			
+			&:hover {
+				background: rgba(72, 187, 120, 0.15);
+			}
 		}
 	}
+}
+
+.mb15 {
+	margin-bottom: 20px;
+}
+
+.ml10 {
+	margin-left: 15px;
+}
+
+.mt15 {
+	margin-top: 20px;
 }
 </style>

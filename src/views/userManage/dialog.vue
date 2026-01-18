@@ -73,7 +73,8 @@ import { nextTick, computed, reactive, ref } from 'vue';
 import type { UploadInstance, UploadProps } from 'element-plus';
 import { ElMessage } from 'element-plus';
 import { Plus } from '@element-plus/icons-vue';
-import request from '/@/utils/request';
+import { useUserApi } from '/@/api/user';
+const userApi = useUserApi();
 
 // 定义子组件向父组件传值/事件
 const emit = defineEmits(['refresh']);
@@ -182,7 +183,7 @@ const onSubmit = () => {
 		}
 
 		if (state.dialog.title == '修改信息') {
-			request.post('/api/user/update', state.form).then((res) => {
+			userApi.updateUser(state.form).then((res) => {
 				if (res.code == 0) {
 					ElMessage.success('修改成功！');
 					setTimeout(() => {
@@ -197,7 +198,7 @@ const onSubmit = () => {
 				}
 			});
 		} else {
-			request.post('/api/user/', state.form).then((res) => {
+			userApi.addUser(state.form).then((res) => {
 				if (res.code == 0) {
 					ElMessage.success('添加成功！');
 				} else {
@@ -223,40 +224,133 @@ defineExpose({
 
 <style scoped lang="scss">
 :deep(.dia) {
-	width: 800px;
-	height: 650px;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
+	.el-dialog {
+		margin-top: 8vh !important;
+		background: rgba(255, 255, 255, 0.95);
+		border-radius: 16px;
+		box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(72, 187, 120, 0.2);
+		
+		.el-dialog__header {
+			padding: 20px;
+			margin-right: 0;
+			border-bottom: 1px solid rgba(72, 187, 120, 0.2);
+			
+			.el-dialog__title {
+				font-size: 18px;
+				font-weight: 600;
+				color: #2f855a;
+			}
+		}
+		
+		.el-dialog__body {
+			padding: 20px;
+		}
+		
+		.el-dialog__footer {
+			padding: 20px;
+			border-top: 1px solid rgba(72, 187, 120, 0.2);
+			
+			.dialog-footer {
+				:deep(.el-button--primary) {
+					background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+					border: none;
+					box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+					transition: all 0.3s ease;
+					
+					&:hover {
+						transform: translateY(-2px);
+						box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+						background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+					}
+				}
+			}
+		}
+	}
 }
 
 .el-form {
-	width: 80%;
-	margin-left: 10%;
+	width: 100%;
+	margin: 0;
 }
 
 .imgs {
-	font-size: 28px;
-	color: hsl(215, 8%, 58%);
+	font-size: 36px;
+	color: #48bb78;
 	width: 120px;
 	height: 120px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	border: 1px dashed #d9d9d9;
-	border-radius: 6px;
+	border: 2px dashed rgba(72, 187, 120, 0.3);
+	border-radius: 12px;
 	cursor: pointer;
-	margin-left: 320px;
-	margin-bottom: 20px;
+	margin: 0 auto 20px;
+	transition: all 0.3s ease;
+	background: rgba(72, 187, 120, 0.05);
+	
+	&:hover {
+		border-color: #48bb78;
+		background: rgba(72, 187, 120, 0.1);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 16px rgba(72, 187, 120, 0.2);
+	}
 }
 
-.avatar-uploader .el-upload:hover {
-	border-color: #409eff;
+.avatar-uploader {
+	:deep(.el-upload) {
+		width: 120px;
+		height: 120px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		border: none;
+		background: transparent;
+		
+		&:hover {
+			border-color: #48bb78;
+		}
+	}
 }
+
 .avatar {
 	width: 120px;
 	height: 120px;
 	display: block;
+	border-radius: 12px;
+	transition: all 0.3s ease;
+	box-shadow: 0 4px 16px rgba(72, 187, 120, 0.2);
+}
+
+:deep(.el-form-item__label) {
+	font-weight: 600;
+	color: #2f855a;
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-select__wrapper) {
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	
+	&:hover {
+		box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+		border-color: rgba(72, 187, 120, 0.4);
+	}
+	
+	&.is-focus,
+	&:focus-within {
+		border-color: #48bb78;
+		box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+	}
+}
+
+.mb20 {
+	margin-bottom: 20px;
+}
+
+:deep(.el-icon-plus) {
+	font-size: 36px;
+	color: #48bb78;
 }
 </style>

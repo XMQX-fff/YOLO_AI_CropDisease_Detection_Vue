@@ -69,6 +69,10 @@ import request from '/@/utils/request';
 // 引入组件
 const GreenhouseDialog = defineAsyncComponent(() => import('./dialog.vue'));
 
+// 导入API
+import { useGreenhouseApi } from '/@/api/greenhouse';
+const greenhouseApi = useGreenhouseApi();
+
 // 定义变量内容
 const greenhouseDialogRef = ref();
 const state = reactive({
@@ -91,10 +95,7 @@ const state = reactive({
 // 获取表格数据
 const getTableData = () => {
 	state.tableData.loading = true;
-	request
-		.get('/api/greenhouse', {
-			params: state.tableData.param,
-		})
+	greenhouseApi.getGreenhouseList(state.tableData.param)
 		.then((res) => {
 			if (res.code == 0) {
 				state.tableData.data = [];
@@ -133,7 +134,7 @@ const onRowDel = (row: any) => {
 		type: 'warning',
 	})
 		.then(() => {
-			request.delete('/api/greenhouse/' + row.id).then((res) => {
+			greenhouseApi.deleteGreenhouse(row.id).then((res) => {
 				if (res.code == 0) {
 					ElMessage({
 						type: 'success',
@@ -173,10 +174,168 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .system-role-container {
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+	min-height: 100vh;
+	padding: 20px;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
 	.system-role-padding {
-		padding: 15px;
+		padding: 20px;
+		background: rgba(255, 255, 255, 0.95);
+		border-radius: 16px;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		transition: all 0.3s ease;
+
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+		}
+
 		.el-table {
 			flex: 1;
+			background: rgba(255, 255, 255, 0.8);
+			border-radius: 12px;
+			border: 1px solid rgba(255, 255, 255, 0.3);
+			overflow: hidden;
+
+			:deep(.el-table__header-wrapper) {
+				.el-table__header {
+					th {
+						background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+						color: white;
+						font-weight: 500;
+						border-bottom: none;
+						padding: 12px 8px;
+
+						&:first-child {
+							border-top-left-radius: 12px;
+						}
+
+						&:last-child {
+							border-top-right-radius: 12px;
+						}
+					}
+				}
+			}
+
+			:deep(.el-table__body-wrapper) {
+				.el-table__body {
+					tr {
+						&:hover {
+							background: rgba(72, 187, 120, 0.1);
+						}
+
+						td {
+							padding: 12px 8px;
+							border-bottom: 1px solid rgba(72, 187, 120, 0.1);
+							transition: all 0.2s ease;
+
+							&:hover {
+								background: rgba(72, 187, 120, 0.15);
+							}
+						}
+					}
+				}
+			}
+
+			:deep(.el-table__empty-block) {
+				background: rgba(255, 255, 255, 0.8);
+			}
+		}
+
+		.system-user-search {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			margin-bottom: 20px;
+			padding: 20px;
+			background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(47, 133, 90, 0.1) 100%);
+			border-radius: 12px;
+			border: 1px solid rgba(72, 187, 120, 0.2);
+
+			.el-input {
+				max-width: 180px;
+
+				:deep(.el-input__wrapper) {
+					border-radius: 8px;
+					transition: all 0.3s ease;
+
+					&:hover {
+						box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+						border-color: rgba(72, 187, 120, 0.4);
+					}
+
+					&.is-focus {
+						border-color: #48bb78;
+						box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+					}
+				}
+			}
+
+			.el-button {
+				border-radius: 8px;
+				transition: all 0.3s ease;
+				padding: 8px 16px;
+
+				&--primary {
+					background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+					border: none;
+					
+					&:hover {
+						transform: translateY(-2px);
+						box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+						background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+					}
+				}
+
+				&--success {
+					background: linear-gradient(135deg, #38a169 0%, #276749 100%);
+					border: none;
+					
+					&:hover {
+						transform: translateY(-2px);
+						box-shadow: 0 6px 16px rgba(56, 161, 105, 0.4);
+						background: linear-gradient(135deg, #276749 0%, #38a169 100%);
+					}
+				}
+			}
+		}
+
+		.mt15 {
+			margin-top: 20px;
+		}
+
+		:deep(.el-pagination) {
+			justify-content: center;
+			display: flex;
+
+			.is-background {
+				background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+				color: white;
+				
+				&:hover {
+					background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+				}
+			}
+
+			.is-active {
+				.is-background {
+					background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+				}
+			}
+
+			.el-pagination__sizes {
+				select {
+					border-radius: 6px;
+					border-color: rgba(72, 187, 120, 0.3);
+					
+					&:hover {
+						border-color: #48bb78;
+					}
+				}
+			}
 		}
 	}
 }

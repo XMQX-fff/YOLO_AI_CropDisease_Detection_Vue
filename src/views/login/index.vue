@@ -129,7 +129,8 @@ import { Session } from '/@/utils/storage';
 import { formatAxis } from '/@/utils/formatTime';
 import { NextLoading } from '/@/utils/loading';
 import type { FormInstance, FormRules } from 'element-plus';
-import request from '/@/utils/request';
+import { useUserApi } from '/@/api/user';
+const userApi = useUserApi();
 
 // 定义变量内容
 const { t } = useI18n();
@@ -216,7 +217,7 @@ const submitForm = (formEl: FormInstance | undefined) => {
 	if (!formEl) return;
 	formEl.validate((valid) => {
 		if (valid) {
-			request.post('/api/user/login', ruleForm).then((res) => {
+			userApi.login(ruleForm).then((res) => {
 				console.log(res);
 				if (res.code == 0) {
 					Cookies.set('role', res.data.role); //  设置角色

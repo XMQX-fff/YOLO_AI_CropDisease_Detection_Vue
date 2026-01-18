@@ -36,7 +36,25 @@ const onGoHome = () => {
 
 <style scoped lang="scss">
 .error {
-	height: 100%;
+	height: 100vh;
+	width: 100%;
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+	padding: 20px;
+	
+	.layout-padding-auto {
+		background: rgba(255, 255, 255, 0.95);
+		border-radius: 16px;
+		box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(72, 187, 120, 0.2);
+		transition: all 0.3s ease;
+		
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 12px 48px rgba(72, 187, 120, 0.3);
+		}
+	}
+	
 	.error-flex {
 		margin: auto;
 		display: flex;
@@ -55,23 +73,41 @@ const onGoHome = () => {
 					animation-fill-mode: forwards;
 				}
 				.left-item-num {
-					color: var(--el-color-info);
+					color: #48bb78;
 					font-size: 55px;
+					font-weight: 700;
 				}
 				.left-item-title {
 					font-size: 20px;
-					color: var(--el-text-color-primary);
+					color: #2d3748;
 					margin: 15px 0 5px 0;
 					animation-delay: 0.1s;
 				}
 				.left-item-msg {
-					color: var(--el-text-color-secondary);
-					font-size: 12px;
+					color: #4a5568;
+					font-size: 14px;
 					margin-bottom: 30px;
 					animation-delay: 0.2s;
 				}
 				.left-item-btn {
 					animation-delay: 0.2s;
+					
+					:deep(.el-button) {
+						background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+						border: none;
+						border-radius: 12px;
+						padding: 10px 30px;
+						font-size: 16px;
+						font-weight: 500;
+						transition: all 0.3s ease;
+						box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+						
+						&:hover {
+							transform: translateY(-3px);
+							box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+							background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+						}
+					}
 				}
 			}
 		}

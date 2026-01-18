@@ -60,7 +60,8 @@
 import { nextTick, reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import type { FormInstance } from 'element-plus';
-import request from '/@/utils/request';
+import { useStorageApi } from '/@/api/storage';
+const storageApi = useStorageApi();
 
 // 定义子组件向父组件传值/事件
 const emit = defineEmits(['refresh']);
@@ -140,7 +141,7 @@ const onSubmit = () => {
 	storageDialogFormRef.value.validate((valid: boolean) => {
 		if (valid) {
 			if (state.dialog.title === '修改库存信息') {
-				request.post('/api/storage/update', state.form).then((res) => {
+				storageApi.updateStorage(state.form).then((res) => {
 					if (res.code == 0) {
 						ElMessage.success('修改成功！');
 						closeDialog();
@@ -153,7 +154,7 @@ const onSubmit = () => {
 					}
 				});
 			} else {
-				request.post('/api/storage', state.form).then((res) => {
+				storageApi.addStorage(state.form).then((res) => {
 					if (res.code == 0) {
 						ElMessage.success('添加成功！');
 						closeDialog();
@@ -181,17 +182,48 @@ defineExpose({
 <style scoped lang="scss">
 :deep(.el-dialog) {
 	margin-top: 8vh !important;
-	.el-dialog__body {
-		padding: 15px 20px;
-	}
+	background: rgba(255, 255, 255, 0.95);
+	border-radius: 16px;
+	box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+	backdrop-filter: blur(10px);
+	border: 1px solid rgba(72, 187, 120, 0.2);
+	
 	.el-dialog__header {
-		padding: 12px 20px;
+		padding: 20px;
 		margin-right: 0;
-		border-bottom: 1px solid #eee;
+		border-bottom: 1px solid rgba(72, 187, 120, 0.2);
+		
+		.el-dialog__title {
+			font-size: 18px;
+			font-weight: 600;
+			color: #2f855a;
+		}
 	}
+	
+	.el-dialog__body {
+		padding: 20px;
+	}
+	
 	.el-dialog__footer {
-		padding: 12px 20px;
-		border-top: 1px solid #eee;
+		padding: 20px;
+		border-top: 1px solid rgba(72, 187, 120, 0.2);
+		
+		.dialog-footer {
+			text-align: right;
+			
+			.el-button--primary {
+				background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+				border: none;
+				box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+				transition: all 0.3s ease;
+				
+				&:hover {
+					transform: translateY(-2px);
+					box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+					background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+				}
+			}
+		}
 	}
 }
 
@@ -199,7 +231,7 @@ defineExpose({
 	width: 100%;
 	margin: 0;
 	.el-form-item {
-		margin-bottom: 15px;
+		margin-bottom: 20px;
 		&:last-child {
 			margin-bottom: 0;
 		}
@@ -207,18 +239,71 @@ defineExpose({
 }
 
 .mb15 {
-	margin-bottom: 15px;
+	margin-bottom: 20px;
 }
 
 :deep(.el-form-item__label) {
-	font-weight: 400;
+	font-weight: 600;
+	color: #2f855a;
 }
 
 :deep(.el-input-number) {
 	width: 100%;
+	
+	.el-input__wrapper {
+		border-radius: 8px;
+		transition: all 0.3s ease;
+		
+		&:hover {
+			box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+			border-color: rgba(72, 187, 120, 0.4);
+		}
+		
+		&.is-focus {
+			border-color: #48bb78;
+			box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+		}
+	}
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-textarea__inner) {
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	
+	&:hover {
+		box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+		border-color: rgba(72, 187, 120, 0.4);
+	}
+	
+	&.is-focus,
+	&:focus-within {
+		border-color: #48bb78;
+		box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+	}
+}
+
+:deep(.el-select__wrapper) {
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	
+	&:hover {
+		box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+		border-color: rgba(72, 187, 120, 0.4);
+	}
+	
+	&.is-focus {
+		border-color: #48bb78;
+		box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+	}
+}
+
+:deep(.el-textarea__inner) {
+	min-height: 100px;
+	resize: vertical;
 }
 
 .dialog-footer {
 	text-align: right;
 }
-</style> 
+</style>

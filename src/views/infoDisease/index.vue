@@ -12,7 +12,7 @@
 					</el-icon>
 					查询
 				</el-button>
-				<el-button size="default" type="success" class="ml10" @click="onOpenAddDisease('add')">
+				<el-button size="default" type="primary" class="ml10" @click="onOpenAddDisease('add')">
 					<el-icon>
 						<ele-FolderAdd />
 					</el-icon>
@@ -43,11 +43,11 @@
 						/>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" width="150" fixed="right" align="center">
+				<el-table-column label="操作" width="250" fixed="right" align="center">
 					<template #default="scope">
-						<el-button size="small" text type="primary" @click="onOpenDetail(scope.row)">详情</el-button>
-						<el-button size="small" text type="primary" @click="onOpenEditDisease('edit', scope.row)">修改</el-button>
-						<el-button size="small" text type="primary" @click="onRowDel(scope.row)">删除</el-button>
+						<el-button size="small" type="primary" @click="onOpenDetail(scope.row)">详情</el-button>
+						<el-button size="small" type="primary" @click="onOpenEditDisease('edit', scope.row)">修改</el-button>
+						<el-button size="small" type="danger" @click="onRowDel(scope.row)">删除</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -79,6 +79,10 @@ import request from '/@/utils/request';
 const DiseaseDialog = defineAsyncComponent(() => import('./dialog.vue'));
 const DiseaseDetail = defineAsyncComponent(() => import('./detail.vue'));
 
+// 导入API
+import { useDiseaseApi } from '/@/api/disease';
+const diseaseApi = useDiseaseApi();
+
 // 定义变量内容
 const diseaseDialogRef = ref();
 const diseaseDetailRef = ref();
@@ -100,10 +104,7 @@ const state = reactive({
 // 获取表格数据
 const getTableData = () => {
 	state.tableData.loading = true;
-	request
-		.get('/api/disease', {
-			params: state.tableData.param,
-		})
+	diseaseApi.getDiseaseList(state.tableData.param)
 		.then((res) => {
 			if (res.code == 0) {
 				state.tableData.data = [];
@@ -147,7 +148,7 @@ const onRowDel = (row: any) => {
 		type: 'warning',
 	})
 		.then(() => {
-			request.delete('/api/disease/' + row.id).then((res) => {
+			diseaseApi.deleteDisease(row.id).then((res) => {
 				if (res.code == 0) {
 					ElMessage({
 						type: 'success',
@@ -187,37 +188,267 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .system-role-container {
+	width: 100%;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+	padding: 20px;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
 	.system-role-padding {
-		padding: 15px;
+		padding: 20px;
+		min-height: calc(100vh - 40px);
+		background: rgba(255, 255, 255, 0.95);
+		border-radius: 16px;
+		box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(72, 187, 120, 0.2);
+		transition: all 0.3s ease;
+		
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 12px 48px rgba(72, 187, 120, 0.3);
+		}
+
 		.el-table {
 			flex: 1;
+			background: rgba(255, 255, 255, 0.9);
+			border-radius: 12px;
+			border: 1px solid rgba(72, 187, 120, 0.2);
+			overflow: hidden;
+			
 			:deep(.el-table__row) {
-				height: 40px;  // 设置行高
-			}
-			:deep(.el-table__header) {
-				th {
-					padding: 6px 0;  // 减小表头padding
+				height: 70px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					background: rgba(72, 187, 120, 0.1);
 				}
 			}
+			
+			:deep(.el-table__header) {
+				th {
+					padding: 10px 0;
+					background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+					color: white;
+					font-weight: 600;
+					border-bottom: none;
+				}
+			}
+			
 			:deep(.el-table__cell) {
-				padding: 3px 0;  // 减小单元格padding
+				padding: 8px 0;
+				border-bottom: 1px solid rgba(72, 187, 120, 0.1);
 			}
+			
 			:deep(.cell) {
-				line-height: 1.3;  // 减小文字行高
+				line-height: 1.5;
 			}
 		}
+		
 		:deep(.el-input) {
-			height: 32px;
-			line-height: 32px;
+			height: 40px;
+			line-height: 40px;
+			max-width: 180px;
+			
+			:deep(.el-input__wrapper) {
+				border-radius: 8px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+					border-color: rgba(72, 187, 120, 0.4);
+				}
+				
+				&.is-focus {
+					border-color: #48bb78;
+					box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+				}
+			}
 		}
+		
 		:deep(.el-select) {
-			height: 32px;
-			line-height: 32px;
-			.el-input {
-				height: 32px;
-				line-height: 32px;
+			height: 40px;
+			line-height: 40px;
+			max-width: 180px;
+			
+			:deep(.el-input__wrapper) {
+				border-radius: 8px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+					border-color: rgba(72, 187, 120, 0.4);
+				}
+				
+				&.is-focus {
+					border-color: #48bb78;
+					box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+				}
+			}
+		}
+		
+		:deep(.el-button) {
+			border-radius: 8px;
+			transition: all 0.3s ease;
+			padding: 8px 16px;
+		}
+		
+		:deep(.el-table .el-button.is-text) {
+			padding: 8px 16px;
+		}
+		
+		:deep(.el-button--primary) {
+			background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+			border: none;
+			
+			&:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 16px rgba(49, 130, 206, 0.4);
+				background: linear-gradient(135deg, #2b6cb0 0%, #3182ce 100%);
+			}
+		}
+		
+		:deep(.el-button--danger) {
+			background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+			border: none;
+			
+			&:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 16px rgba(229, 62, 62, 0.4);
+				background: linear-gradient(135deg, #c53030 0%, #e53e3e 100%);
+			}
+		}
+		
+		:deep(.el-pagination) {
+			.el-pagination__sizes .el-input .el-input__wrapper {
+				border-radius: 8px;
+			}
+			
+			.el-pager li {
+				border-radius: 4px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					background: rgba(72, 187, 120, 0.1);
+				}
+				
+				&.active {
+					background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+					color: white;
+				}
+			}
+			
+			.btn-prev,
+			.btn-next {
+				border-radius: 4px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					background: rgba(72, 187, 120, 0.1);
+				}
+			}
+		}
+		
+		:deep(.el-image) {
+			border-radius: 6px;
+			transition: all 0.3s ease;
+			
+			&:hover {
+				transform: scale(1.1);
+				box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
 			}
 		}
 	}
+}
+
+// 搜索区域样式
+.system-user-search {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 20px;
+	padding: 20px;
+	background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(47, 133, 90, 0.1) 100%);
+	border-radius: 12px;
+	border: 1px solid rgba(72, 187, 120, 0.2);
+
+	:deep(.el-input) {
+		height: 40px;
+		line-height: 40px;
+		max-width: 180px;
+		
+		:deep(.el-input__wrapper) {
+			border-radius: 8px;
+			transition: all 0.3s ease;
+			
+			&:hover {
+				box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+				border-color: rgba(72, 187, 120, 0.4);
+			}
+			
+			&.is-focus {
+				border-color: #48bb78;
+				box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+			}
+		}
+	}
+
+	:deep(.el-select) {
+		height: 40px;
+		line-height: 40px;
+		max-width: 180px;
+		
+		:deep(.el-input__wrapper) {
+			border-radius: 8px;
+			transition: all 0.3s ease;
+			
+			&:hover {
+				box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+				border-color: rgba(72, 187, 120, 0.4);
+			}
+			
+			&.is-focus {
+				border-color: #48bb78;
+				box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+			}
+		}
+	}
+
+	:deep(.el-button) {
+		border-radius: 8px;
+		transition: all 0.3s ease;
+		padding: 8px 16px;
+	}
+	
+	:deep(.el-table .el-button.is-text) {
+		padding: 8px 16px;
+	}
+	
+	:deep(.el-button--primary) {
+		background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+		border: none;
+		
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 16px rgba(49, 130, 206, 0.4);
+			background: linear-gradient(135deg, #2b6cb0 0%, #3182ce 100%);
+		}
+	}
+}
+
+.mb15 {
+	margin-bottom: 20px;
+}
+
+.ml10 {
+	margin-left: 15px;
+}
+
+.mt15 {
+	margin-top: 20px;
 }
 </style> 

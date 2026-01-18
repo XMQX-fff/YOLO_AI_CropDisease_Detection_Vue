@@ -72,6 +72,10 @@ import other from '/@/utils/other';
 import request from '/@/utils/request';
 import { Session, Local } from '/@/utils/storage';
 import Cookies from 'js-cookie';
+
+// 导入API
+import { useUserApi } from '/@/api/user';
+const userApi = useUserApi();
 import screenfull from 'screenfull';
 import mittBus from '/@/utils/mitt';
 // 引入组件
@@ -184,7 +188,7 @@ const initI18nOrSize = (value: string, attr: string) => {
 	state[attr] = Local.get('themeConfig')[value];
 };
 const getTableData = () => {
-	request.get('/api/user/' + userInfos.value.userName).then((res) => {
+	userApi.getUserDetail(userInfos.value.userName).then((res) => {
 		// console.log(res);
 		if (res.code == 0) {
 			state.img = res.data.avatar;
@@ -225,93 +229,145 @@ onMounted(() => {
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
+	color: white;
+	
 	&-link {
 		height: 100%;
 		display: flex;
 		align-items: center;
 		white-space: nowrap;
+		color: white;
+		transition: all 0.3s ease;
+		
+		&:hover {
+			color: white;
+			text-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+		}
+		
 		&-photo {
 			width: 40px;
 			height: 40px;
-			border-radius: 100%;
-			margin-right: 15px;
+			border-radius: 50%;
+			margin-right: 10px;
+			border: 2px solid rgba(255, 255, 255, 0.3);
+			box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+			transition: all 0.3s ease;
+			
+			&:hover {
+			transform: scale(1.1);
+			box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+		}
 		}
 	}
+	
 	&-icon {
 		padding: 0 10px;
 		cursor: pointer;
-		color: #000000 !important;
+		color: white !important;
 		height: 50px;
 		line-height: 50px;
 		display: flex;
 		align-items: center;
+		transition: all 0.3s ease;
+		
 		&:hover {
-			background: #f0f0f0 !important;
+			background: rgba(255, 255, 255, 0.2) !important;
 			i {
 				display: inline-block;
 			}
 		}
+		
 		i {
 			font-size: 16px;
+			color: white !important;
+			transition: all 0.3s ease;
+		}
+		
+		&:hover i {
+			transform: scale(1.1);
+			text-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
 		}
 	}
+	
 	:deep(.el-dropdown) {
-		color: var(--next-bg-topBarColor);
+		color: white;
 	}
+	
+	:deep(.el-icon) {
+		color: white;
+		font-size: 16px;
+		transition: all 0.3s ease;
+		
+		&:hover {
+			transform: scale(1.1);
+			text-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+		}
+	}
+	
 	:deep(.el-badge) {
 		height: 40px;
 		line-height: 40px;
 		display: flex;
 		align-items: center;
+		color: white;
 	}
+	
 	:deep(.el-badge__content.is-fixed) {
 		top: 12px;
 	}
 }
+
 .custom-dropdown {
 	/* 自定义 el-dropdown 的样式 */
-	.el-dropdown-link {
-		color: #fff; /* 修改字体颜色 */
-		background-color: #409eff; /* 修改背景色 */
-		padding: 10px 20px;
-		border-radius: 4px;
-		transition: background-color 0.3s, box-shadow 0.3s;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-		cursor: pointer;
-	}
-
-	.el-dropdown-link:hover {
-		background-color: #66b1ff; /* 悬停时的背景色 */
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-	}
-
-	.el-dropdown-menu {
-		background-color: #ffffff;
-		border: 1px solid #dcdcdc;
-		border-radius: 10px;
-		box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-		overflow: hidden;
-		padding: 5px;
-	}
-
-	.el-dropdown-item {
-		color: #000000 !important;
-		padding: 12px 20px;
-		transition: background-color 0.3s, color 0.3s;
+	:deep(.el-dropdown-link) {
+		color: white;
 		display: flex;
 		align-items: center;
-		justify-content: center;
+		gap: 8px;
+		transition: all 0.3s ease;
+		cursor: pointer;
+		
 		&:hover {
-			background-color: #f0f0f0 !important;
+			color: white;
+			text-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
 		}
 	}
 
-	.el-dropdown-item i {
-		margin-right: 8px;
+	:deep(.el-dropdown-menu) {
+		background: rgba(255, 255, 255, 0.95);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		border-radius: 12px;
+		box-shadow: 0 10px 30px rgba(72, 187, 120, 0.3);
+		overflow: hidden;
+		padding: 5px;
+		transition: all 0.3s ease;
 	}
 
-	.el-dropdown-item:active {
-		background-color: #e6f7ff;
+	:deep(.el-dropdown-item) {
+		color: #4a5568 !important;
+		padding: 12px 20px;
+		transition: all 0.3s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 8px;
+		margin: 2px 0;
+		
+		&:hover {
+			background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%) !important;
+			color: white !important;
+			transform: translateX(4px);
+		}
+		
+		&:active {
+			background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%) !important;
+		}
+		
+		&.is-disabled {
+			color: #a0aec0 !important;
+			background: transparent !important;
+		}
 	}
 }
 </style>

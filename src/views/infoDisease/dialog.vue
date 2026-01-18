@@ -61,7 +61,8 @@ import { nextTick, reactive, ref } from 'vue';
 import type { UploadInstance, UploadProps } from 'element-plus';
 import { ElMessage } from 'element-plus';
 import { Plus } from '@element-plus/icons-vue';
-import request from '/@/utils/request';
+import { useDiseaseApi } from '/@/api/disease';
+const diseaseApi = useDiseaseApi();
 
 // 定义子组件向父组件传值/事件
 const emit = defineEmits(['refresh']);
@@ -143,7 +144,7 @@ const onCancel = () => {
 // 提交
 const onSubmit = () => {
 	if (state.dialog.title === '修改病害信息') {
-		request.put('/api/disease', state.form).then((res) => {
+		diseaseApi.updateDisease(state.form).then((res) => {
 			if (res.code == 0) {
 				ElMessage.success('修改成功！');
 				setTimeout(() => {
@@ -163,7 +164,7 @@ const onSubmit = () => {
 			});
 		});
 	} else {
-		request.post('/api/disease', state.form).then((res) => {
+		diseaseApi.addDisease(state.form).then((res) => {
 			if (res.code == 0) {
 				ElMessage.success('添加成功！');
 			} else {
@@ -201,49 +202,82 @@ defineExpose({
 :deep(.dia) {
 	.el-dialog {
 		margin-top: 8vh !important;
-		.el-dialog__body {
-			padding: 20px;
-		}
+		background: rgba(255, 255, 255, 0.95);
+		border-radius: 16px;
+		box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(72, 187, 120, 0.2);
+		
 		.el-dialog__header {
 			padding: 20px;
 			margin-right: 0;
-			border-bottom: 1px solid var(--el-border-color-light);
+			border-bottom: 1px solid rgba(72, 187, 120, 0.2);
+			
+			.el-dialog__title {
+				font-size: 18px;
+				font-weight: 600;
+				color: #2f855a;
+			}
 		}
+		
+		.el-dialog__body {
+			padding: 20px;
+		}
+		
 		.el-dialog__footer {
 			padding: 20px;
-			border-top: 1px solid var(--el-border-color-light);
+			border-top: 1px solid rgba(72, 187, 120, 0.2);
+			
+			.dialog-footer {
+				:deep(.el-button--primary) {
+					background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+					border: none;
+					box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+					transition: all 0.3s ease;
+					
+					&:hover {
+						transform: translateY(-2px);
+						box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+						background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+					}
+				}
+			}
 		}
 	}
 }
 
 .avatar-uploader {
 	:deep(.el-upload) {
-		border: 1px dashed var(--el-border-color);
-		border-radius: 6px;
+		border: 2px dashed rgba(72, 187, 120, 0.3);
+		border-radius: 12px;
 		cursor: pointer;
 		position: relative;
 		overflow: hidden;
-		transition: var(--el-transition-duration-fast);
+		transition: all 0.3s ease;
 		width: 200px;
 		height: 200px;
 		display: flex;
 		justify-content: center;
 		align-items: center;
+		background: rgba(72, 187, 120, 0.05);
 
 		&:hover {
-			border-color: var(--el-color-primary);
+			border-color: #48bb78;
+			background: rgba(72, 187, 120, 0.1);
+			transform: translateY(-2px);
 		}
 	}
 }
 
 .avatar-uploader-icon {
-	font-size: 28px;
-	color: #8c939d;
+	font-size: 36px;
+	color: #48bb78;
 	width: 100%;
 	height: 100%;
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	transition: all 0.3s ease;
 }
 
 .avatar {
@@ -251,6 +285,9 @@ defineExpose({
 	height: 100%;
 	object-fit: contain;
 	display: block;
+	border-radius: 12px;
+	transition: all 0.3s ease;
+	box-shadow: 0 4px 16px rgba(72, 187, 120, 0.2);
 }
 
 .mb20 {
@@ -258,14 +295,40 @@ defineExpose({
 }
 
 :deep(.el-form-item__label) {
-	font-weight: 500;
+	font-weight: 600;
+	color: #2f855a;
 }
 
 :deep(.el-input__wrapper),
 :deep(.el-textarea__inner) {
-	box-shadow: 0 0 0 1px #dcdfe6 inset;
+	box-shadow: 0 0 0 1px rgba(72, 187, 120, 0.2) inset;
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	
 	&:hover {
-		box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+		box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.3) inset;
+		border-color: rgba(72, 187, 120, 0.4);
+	}
+	
+	&.is-focus,
+	&:focus-within {
+		box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.4) inset;
+		border-color: #48bb78;
 	}
 }
-</style> 
+
+:deep(.el-select__wrapper) {
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	
+	&:hover {
+		box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+		border-color: rgba(72, 187, 120, 0.4);
+	}
+	
+	&.is-focus {
+		border-color: #48bb78;
+		box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+	}
+}
+</style>

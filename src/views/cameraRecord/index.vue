@@ -25,9 +25,9 @@
 				<el-table-column prop="conf" label="最小阈值" show-overflow-tooltip width="100" align="center"></el-table-column>
 				<el-table-column prop="username" label="识别用户" show-overflow-tooltip align="center"></el-table-column>
 				<el-table-column prop="startTime" label="识别时间" show-overflow-tooltip align="center"></el-table-column>
-				<el-table-column label="操作" width="130" align="center">
+				<el-table-column label="操作" width="100" fixed="right" align="center">
 					<template #default="scope">
-						<el-button size="small" text type="primary" @click="onRowDel(scope.row)">删除</el-button>
+						<el-button size="small" type="danger" @click="onRowDel(scope.row)">删除</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -46,9 +46,11 @@ import { ElMessageBox, ElMessage } from 'element-plus';
 import request from '/@/utils/request';
 import { useUserInfo } from '/@/stores/userInfo';
 import { storeToRefs } from 'pinia';
+import { useRecordApi } from '/@/api/record';
 
 const stores = useUserInfo();
 const { userInfos } = storeToRefs(stores);
+const recordApi = useRecordApi();
 
 const state = reactive<SysRoleState>({
 	tableData: {
@@ -73,10 +75,7 @@ const getTableData = () => {
 	if (userInfos.value.userName != 'admin') {
 		state.tableData.param.search = userInfos.value.userName;
 	}
-	request
-		.get('/api/cameraRecords', {
-			params: state.tableData.param,
-		})
+	recordApi.getCameraRecordList(state.tableData.param)
 		.then((res) => {
 			if (res.code == 0) {
 				state.tableData.data = [];
@@ -107,7 +106,7 @@ const onRowDel = (row: any) => {
 		type: 'warning',
 	})
 		.then(() => {
-			request.delete('/api/cameraRecords/' + row.id).then((res) => {
+			recordApi.deleteCameraRecord(row.id).then((res) => {
 				if (res.code == 0) {
 					ElMessage({
 						type: 'success',
@@ -145,38 +144,230 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .system-role-container {
+	width: 100%;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+	background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+	padding: 20px;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
-	// background: radial-gradient(circle, #d3e3f1 0%, #ffffff 100%);
 	.system-role-padding {
-		padding: 15px;
+		padding: 20px;
+		min-height: calc(100vh - 40px);
+		background: rgba(255, 255, 255, 0.95);
+		border-radius: 16px;
+		box-shadow: 0 8px 32px rgba(72, 187, 120, 0.2);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(72, 187, 120, 0.2);
+		transition: all 0.3s ease;
+		
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 12px 48px rgba(72, 187, 120, 0.3);
+		}
+
 		.el-table {
 			flex: 1;
+			background: rgba(255, 255, 255, 0.9);
+			border-radius: 12px;
+			border: 1px solid rgba(72, 187, 120, 0.2);
+			overflow: hidden;
+			
 			:deep(.el-table__row) {
-				height: 140px;  // 设置行高
-			}
-			:deep(.el-table__header) {
-				th {
-					padding: 6px 0;  // 减小表头padding
+				height: 160px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					background: rgba(72, 187, 120, 0.1);
 				}
 			}
-			:deep(.el-table__cell) {
-				padding: 3px 0;  // 减小单元格padding
+			
+			:deep(.el-table__header) {
+				th {
+					padding: 10px 0;
+					background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+					color: white;
+					font-weight: 600;
+					border-bottom: none;
+				}
 			}
+			
+			:deep(.el-table__cell) {
+				padding: 8px 0;
+				border-bottom: 1px solid rgba(72, 187, 120, 0.1);
+			}
+			
 			:deep(.cell) {
-				line-height: 1.3;  // 减小文字行高
+				line-height: 1.5;
 			}
 		}
+		
 		:deep(.el-input) {
-			height: 32px;
-			line-height: 32px;
+			height: 40px;
+			line-height: 40px;
+			max-width: 180px;
+			
+			:deep(.el-input__wrapper) {
+				border-radius: 8px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+					border-color: rgba(72, 187, 120, 0.4);
+				}
+				
+				&.is-focus {
+					border-color: #48bb78;
+					box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+				}
+			}
+		}
+		
+		:deep(.el-button) {
+			border-radius: 8px;
+			transition: all 0.3s ease;
+			padding: 8px 16px;
+		}
+		
+		:deep(.el-button--primary) {
+			background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+			border: none;
+			
+			&:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 16px rgba(49, 130, 206, 0.4);
+				background: linear-gradient(135deg, #2b6cb0 0%, #3182ce 100%);
+			}
+		}
+		
+		:deep(.el-button--danger) {
+			background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+			border: none;
+			
+			&:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 16px rgba(229, 62, 62, 0.4);
+				background: linear-gradient(135deg, #c53030 0%, #e53e3e 100%);
+			}
+		}
+		
+		:deep(.el-button--text) {
+			color: #48bb78;
+			
+			&:hover {
+				color: #2f855a;
+				background: rgba(72, 187, 120, 0.1);
+			}
+		}
+		
+		:deep(.el-pagination) {
+			.el-pagination__sizes .el-input .el-input__wrapper {
+				border-radius: 8px;
+			}
+			
+			.el-pager li {
+				border-radius: 4px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					background: rgba(72, 187, 120, 0.1);
+				}
+				
+				&.active {
+					background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+					color: white;
+				}
+			}
+			
+			.btn-prev,
+			.btn-next {
+				border-radius: 4px;
+				transition: all 0.3s ease;
+				
+				&:hover {
+					background: rgba(72, 187, 120, 0.1);
+				}
+			}
 		}
 	}
 }
 
 .video {
 	width: 100%;
-	max-height: 120px;  // 限制视频最大高度
+	max-height: 140px;
 	height: auto;
 	object-fit: contain;
+	border-radius: 8px;
+	box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+	transition: all 0.3s ease;
+	
+	&:hover {
+		transform: scale(1.02);
+		box-shadow: 0 6px 16px rgba(72, 187, 120, 0.3);
+	}
+}
+
+.system-user-search {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 20px;
+	padding: 20px;
+	background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(47, 133, 90, 0.1) 100%);
+	border-radius: 12px;
+	border: 1px solid rgba(72, 187, 120, 0.2);
+
+	:deep(.el-input) {
+		height: 40px;
+		line-height: 40px;
+		max-width: 180px;
+		
+		:deep(.el-input__wrapper) {
+			border-radius: 8px;
+			transition: all 0.3s ease;
+			
+			&:hover {
+				box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+				border-color: rgba(72, 187, 120, 0.4);
+			}
+			
+			&.is-focus {
+				border-color: #48bb78;
+				box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+			}
+		}
+	}
+
+	:deep(.el-button) {
+		border-radius: 8px;
+		transition: all 0.3s ease;
+		padding: 8px 16px;
+	}
+	
+	:deep(.el-button--primary) {
+		background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+		border: none;
+		
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+			background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%);
+		}
+	}
+}
+
+.mb15 {
+	margin-bottom: 20px;
+}
+
+.ml10 {
+	margin-left: 15px;
+}
+
+.mt15 {
+	margin-top: 20px;
 }
 </style>

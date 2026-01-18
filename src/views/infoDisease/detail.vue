@@ -93,7 +93,11 @@ defineExpose({ openDialog });
 		.title {
 			font-size: 32px;
 			font-weight: bold;
-			color: #303133;
+			color: #2f855a;
+			background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			background-clip: text;
 		}
 	}
 	.detail-content {
@@ -106,14 +110,14 @@ defineExpose({ openDialog });
 				.section-title {
 					font-size: 20px;
 					font-weight: bold;
-					color: #303133;
+					color: #2f855a;
 					margin-bottom: 15px;
 					display: flex;
 					align-items: center;
 					.el-icon {
 						margin-right: 8px;
 						font-size: 22px;
-						color: #409EFF;
+						color: #48bb78;
 					}
 				}
 				.section-content {
@@ -122,8 +126,16 @@ defineExpose({ openDialog });
 					line-height: 2;
 					text-align: justify;
 					padding: 20px;
-					background: #f5f7fa;
-					border-radius: 8px;
+					background: rgba(72, 187, 120, 0.05);
+					border-radius: 12px;
+					border: 1px solid rgba(72, 187, 120, 0.2);
+					transition: all 0.3s ease;
+					
+					&:hover {
+						background: rgba(72, 187, 120, 0.1);
+						transform: translateY(-2px);
+						box-shadow: 0 4px 12px rgba(72, 187, 120, 0.15);
+					}
 				}
 			}
 		}
@@ -133,14 +145,14 @@ defineExpose({ openDialog });
 				.section-title {
 					font-size: 20px;
 					font-weight: bold;
-					color: #303133;
+					color: #2f855a;
 					margin-bottom: 15px;
 					display: flex;
 					align-items: center;
 					.el-icon {
 						margin-right: 8px;
 						font-size: 22px;
-						color: #409EFF;
+						color: #48bb78;
 					}
 				}
 				.image-content {
@@ -148,11 +160,19 @@ defineExpose({ openDialog });
 					justify-content: center;
 					align-items: center;
 					padding: 20px;
-					background: #f5f7fa;
-					border-radius: 8px;
+					background: rgba(72, 187, 120, 0.05);
+					border-radius: 12px;
+					border: 1px solid rgba(72, 187, 120, 0.2);
+					transition: all 0.3s ease;
+					
+					&:hover {
+						background: rgba(72, 187, 120, 0.1);
+						transform: translateY(-2px);
+						box-shadow: 0 4px 12px rgba(72, 187, 120, 0.15);
+					}
 				}
 			}
 		}
 	}
 }
-</style> 
+</style>
