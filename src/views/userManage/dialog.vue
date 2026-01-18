@@ -91,6 +91,7 @@ const handleAvatarSuccessone: UploadProps['onSuccess'] = (response, uploadFile) 
 const option = [
 	{ id: 1, label: '管理员', role: 'admin' },
 	{ id: 2, label: '普通用户', role: 'common' },
+	{ id: 3, label: '供应商', role: 'supplier' },
 ];
 
 // 定义变量内容
@@ -180,6 +181,8 @@ const onSubmit = () => {
 			state.form['role'] = 'common';
 		} else if (state.form['role'] == '其他用户') {
 			state.form['role'] = 'others';
+		} else if (state.form['role'] == '供应商') {
+			state.form['role'] = 'supplier';
 		}
 
 		if (state.dialog.title == '修改信息') {

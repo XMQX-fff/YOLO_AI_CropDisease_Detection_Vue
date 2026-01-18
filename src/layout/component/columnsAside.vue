@@ -192,6 +192,7 @@ watch(
 </script>
 
 <style scoped lang="scss">
+
 .layout-columns-aside {
 	width: 70px;
 	height: 100%;

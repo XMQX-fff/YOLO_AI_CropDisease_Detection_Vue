@@ -92,16 +92,18 @@ const getTableData = () => {
 					state.tableData.loading = false;
 				}, 500);
 				for (let i = 0; i < res.data.records.length; i++) {
-					state.tableData.data[i] = res.data.records[i];
-					state.tableData.data[i]['num'] = i + 1;
-					if (state.tableData.data[i]['role'] == 'admin') {
-						state.tableData.data[i]['role'] = '管理员';
-					} else if (state.tableData.data[i]['role'] == 'common') {
-						state.tableData.data[i]['role'] = '普通用户';
-					} else if (state.tableData.data[i]['role'] == 'others') {
-						state.tableData.data[i]['role'] = '其他用户';
-					}
+				state.tableData.data[i] = res.data.records[i];
+				state.tableData.data[i]['num'] = i + 1;
+				if (state.tableData.data[i]['role'] == 'admin') {
+					state.tableData.data[i]['role'] = '管理员';
+				} else if (state.tableData.data[i]['role'] == 'common') {
+					state.tableData.data[i]['role'] = '普通用户';
+				} else if (state.tableData.data[i]['role'] == 'others') {
+					state.tableData.data[i]['role'] = '其他用户';
+				} else if (state.tableData.data[i]['role'] == 'supplier') {
+					state.tableData.data[i]['role'] = '供应商';
 				}
+			}
 				state.tableData.total = res.data.total;
 			} else {
 				ElMessage({
