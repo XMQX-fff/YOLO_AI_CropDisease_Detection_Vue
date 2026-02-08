@@ -99,7 +99,7 @@
 								</template>
 							</el-table-column>
 							<el-table-column prop="orderTime" label="下单时间" width="220" align="center" />
-							<el-table-column prop="logisticsInfo" label="物流信息" show-overflow-tooltip width="250" align="center" />
+							<el-table-column prop="logisticsStatus" label="物流信息" show-overflow-tooltip width="250" align="center" />
 							<el-table-column label="操作" width="300" fixed="right" align="center">
 								<template #default="scope">
 									<el-button size="small" type="primary" @click="viewOrderDetails(scope.row)">查看详情</el-button>
@@ -222,7 +222,7 @@
 				<div class="order-info-grid">
 					<div class="order-info-item">
 						<span class="label">订单号:</span>
-						<span class="value">{{ orderDetail.order.orderId }}</span>
+						<span class="value">{{ orderDetail.order.id }}</span>
 					</div>
 					<div class="order-info-item">
 						<span class="label">订单状态:</span>
@@ -411,7 +411,6 @@ const getOrderList = () => {
 
 	// 获取当前登录用户信息
 	const currentUser = userInfoStore.userInfos;
-	console.log('currentUser', currentUser);
 	// 调用真实API获取订单列表
 	const params = {
 		pageNum: state.orderPageNum,
