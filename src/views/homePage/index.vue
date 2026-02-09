@@ -58,23 +58,38 @@ const agricultureLinks = ref([
 // 获取天气数据
 const fetchWeatherData = async () => {
   try {
-    const appid = '68314773'
-    const appsecret = '9KMGqIrJ'
-    const cityid = '101010100'
-    const url = `http://v1.yiketianqi.com/api?unescape=1&version=v61&appid=${appid}&appsecret=${appsecret}&cityid=${cityid}`
+    // 固定使用广州的天气
+    const city = '广州'
+    const url = `https://uapis.cn/api/v1/misc/weather?city=${encodeURIComponent(city)}`
     
     const response = await fetch(url)
     const data = await response.json()
     
+    // 解析UAPI返回的数据结构
+    const weatherData = data
+    const temperature = weatherData.temperature
+    const weatherDesc = weatherData.weather
+    const windDirection = weatherData.wind_direction
+    const windPower = weatherData.wind_power
+    const humidity = weatherData.humidity
+    const reportTime = weatherData.report_time
+    
+    // 获取当前日期和星期
+    const now = new Date()
+    const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit' }
+    const weekdayOptions = { weekday: 'long' }
+    const date = now.toLocaleDateString('zh-CN', dateOptions)
+    const weekday = now.toLocaleDateString('zh-CN', weekdayOptions)
+    
     weatherInfo.value = {
-      date: data.date,
-      weekday: data.week,
-      status: data.city,
-      temperature: data.tem + '°C',
-      weather: data.wea,
-      wind: `${data.win} ${data.win_speed}`,
-      airQuality: `${data.air_level} (AQI: ${data.air})`,
-      notice: data.air_tips
+      date: date,
+      weekday: weekday,
+      status: `${weatherData.province} ${weatherData.city}`,
+      temperature: temperature + '°C',
+      weather: weatherDesc,
+      wind: `${windDirection} ${windPower}级`,
+      airQuality: `湿度: ${humidity}%`,
+      notice: `当前天气${weatherDesc}，温度${temperature}°C，请注意适当增减衣物。\n数据更新时间：${reportTime}`
     }
   } catch (err) {
     console.error('获取天气数据失败:', err)
