@@ -31,11 +31,22 @@
       </el-row>
     </div>
     <div class="right-panel">
-      <div class="suggestion-box">
-        <h3>智能建议</h3>
-        <el-button type="primary" @click="getSuggestions" :loading="loading">获取建议</el-button>
-        <div class="suggestions" v-if="markdownContent">
-          <div v-html="markdownContent"></div>
+      <div class="chat-box">
+        <div class="chat-header">
+          <h3>智能建议</h3>
+        </div>
+        <div class="chat-body">
+          <div class="message-list" v-if="markdownContent">
+            <div class="message ai-message">
+              <div class="message-content" v-html="markdownContent"></div>
+            </div>
+          </div>
+          <div class="loading-indicator" v-else-if="loading">
+            正在分析环境数据，生成智能建议...
+          </div>
+        </div>
+        <div class="chat-footer">
+          <el-button type="primary" @click="getSuggestions" :loading="loading" class="get-suggestion-btn">获取建议</el-button>
         </div>
       </div>
     </div>
@@ -177,75 +188,69 @@ async function getSuggestions() {
     const cropInfo = greenhouseData.value ? `当前种植作物是${greenhouseData.value.cropType || '未知'}。` : '当前种植作物信息未提供。';
     const apiKey = 'sk-rbwwfonuwpfdaoxcurhgdaklmyazympolaernwmsbuljzuqy';
     
-    // 清空之前的内容并添加加载提示
-    markdownContent.value = '<div class="loading-indicator">正在分析环境数据，生成智能建议...</div>';
+    // 清空之前的内容
+    markdownContent.value = '';
     let fullContent = '';
+    const startTime = performance.now();
+    console.log('[1] 开始请求:', Date.now());
+    // 发送流式请求
+    const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'Pro/zai-org/GLM-4.7',
+        messages: [
+          { role: 'system', content: '根据以下环境数据和种植作物提供当下环境应该调整的建议，如果不需要调整，则给出不需要调整的理由：' },
+          { role: 'user', content: cropInfo },
+          ...firstRow.value.map(item => ({ role: 'user', content: `${item.label}: ${item.value}` })),
+          ...secondRow.value.map(item => ({ role: 'user', content: `${item.label}: ${item.value}` }))
+        ],
+        stream: true
+      })
+    });
+    console.log('[2] 收到响应头:', Date.now(), '耗时:', performance.now() - startTime);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     
-    // 立即开始处理，不等待API响应
-    setTimeout(async () => {
-      // 发送流式请求
-      const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'Pro/zai-org/GLM-4.7',
-          messages: [
-            { role: 'system', content: '根据以下环境数据和种植作物提供当下环境应该调整的建议，如果不需要调整，则给出不需要调整的理由：' },
-            { role: 'user', content: cropInfo },
-            ...firstRow.value.map(item => ({ role: 'user', content: `${item.label}: ${item.value}` })),
-            ...secondRow.value.map(item => ({ role: 'user', content: `${item.label}: ${item.value}` }))
-          ],
-          stream: true
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
       }
       
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
       
-      // 清空加载提示，准备接收内容
-      fullContent = '';
-      markdownContent.value = '';
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-        
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              continue;
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') {
+            continue;
+          }
+          
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices[0].delta;
+            if (delta.content) {
+              fullContent += delta.content;
+              // 实时更新markdown内容，使用requestAnimationFrame优化渲染性能
+              requestAnimationFrame(() => {
+                markdownContent.value = renderMarkdown(fullContent);
+              });
             }
-            
-            try {
-              const parsed = JSON.parse(data);
-              const delta = parsed.choices[0].delta;
-              if (delta.content) {
-                fullContent += delta.content;
-                // 实时更新markdown内容，使用requestAnimationFrame优化渲染性能
-                requestAnimationFrame(() => {
-                  markdownContent.value = renderMarkdown(fullContent);
-                });
-              }
-            } catch (e) {
-              console.error('Error parsing chunk:', e);
-            }
+          } catch (e) {
+            console.error('Error parsing chunk:', e);
           }
         }
       }
-    }, 100); // 100ms延迟，确保加载提示有足够时间显示
+    }
   } catch (error) {
     console.error('Error:', error);
     markdownContent.value = `<div class="error-message">获取建议失败：${error.message}</div>`;
@@ -308,71 +313,74 @@ async function getSuggestions() {
   overflow-y: auto;
 }
 
-.suggestion-box {
-  text-align: center;
-  padding: 30px;
-  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  transition: all 0.3s ease;
-  height: 100%;
+.chat-box {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+}
+
+.chat-header {
+  padding: 15px 20px;
+  background-color: #48bb78;
+  color: white;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.chat-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  background: none;
+  -webkit-background-clip: none;
+  -webkit-text-fill-color: white;
+  background-clip: none;
+}
+
+.chat-body {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #f7fafc;
+}
+
+.message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.message {
+  max-width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+}
+
+.ai-message {
+  align-self: flex-start;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+.message-content {
+  line-height: 1.6;
+}
+
+.chat-footer {
+  padding: 15px 20px;
+  background-color: #ffffff;
+  border-top: 1px solid #e8e8e8;
+  display: flex;
+  justify-content: flex-end;
   align-items: center;
 }
 
-.suggestion-box:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
-}
-
-.suggestion-box h3 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 30px;
-  color: #2d3748;
-  background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.suggestions {
-  text-align: left;
-  margin-top: 25px;
-  padding: 20px;
-  background-color: white;
-  border-radius: 12px;
-  line-height: 1.8;
-  font-size: 16px;
-  color: #4a5568;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #48bb78;
-  flex: 1;
-  width: 100%;
-  overflow-y: auto;
-}
-
-.suggestions p {
-  margin-bottom: 15px;
-  padding-left: 15px;
-  position: relative;
-
-  &:before {
-    content: '•';
-    position: absolute;
-    left: 0;
-    top: 0;
-    color: #48bb78;
-    font-weight: bold;
-    font-size: 20px;
-    line-height: 1.6;
-  }
-}
-
-.suggestions p:last-child {
-  margin-bottom: 0;
+.get-suggestion-btn {
+  min-width: 120px;
 }
 
 /* Markdown样式 */
