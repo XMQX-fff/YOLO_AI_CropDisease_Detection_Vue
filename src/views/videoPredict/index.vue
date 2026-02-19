@@ -60,7 +60,7 @@ const predictApi = usePredictApi();
 
 const uploadFile = ref<UploadInstance>();
 const stores = useUserInfo();
-const conf = ref('');
+const conf = ref(50);
 const kind = ref('');
 const weight = ref('');
 const { userInfos } = storeToRefs(stores);
@@ -163,8 +163,25 @@ const getData = () => {
 
 
 const upData = () => {
+	if (!kind.value) {
+		ElMessage.error('请先选择作物种类！');
+		return;
+	}
+	if (!weight.value) {
+		ElMessage.error('请先选择模型！');
+		return;
+	}
+	if (!conf.value) {
+		ElMessage.error('请先设置置信度阈值！');
+		return;
+	}
+	if (!state.form.inputVideo) {
+		ElMessage.error('请先上传视频！');
+		return;
+	}
+	
 	state.form.weight = weight.value;
-	state.form.conf = (parseFloat(conf.value)/100);
+	state.form.conf = conf.value / 100;
 	state.form.username = userInfos.value.userName;
 	state.form.kind = kind.value;
 	state.form.startTime = formatDate(new Date(), 'YYYY-mm-dd HH:MM:SS');

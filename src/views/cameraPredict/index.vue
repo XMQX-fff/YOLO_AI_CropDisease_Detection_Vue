@@ -55,7 +55,7 @@ const predictApi = usePredictApi();
 import { formatDate } from '/@/utils/formatTime';
 
 const stores = useUserInfo();
-const conf = ref('');
+const conf = ref(50);
 const kind = ref('');
 const weight = ref('');
 const { userInfos } = storeToRefs(stores);
@@ -154,9 +154,22 @@ const getData = () => {
 
 
 const start = () => {
+	if (!kind.value) {
+		ElMessage.error('请先选择作物种类！');
+		return;
+	}
+	if (!weight.value) {
+		ElMessage.error('请先选择模型！');
+		return;
+	}
+	if (!conf.value) {
+		ElMessage.error('请先设置置信度阈值！');
+		return;
+	}
+	
 	state.form.weight = weight.value;
 	state.form.kind = kind.value;
-	state.form.conf = (parseFloat(conf.value)/100);
+	state.form.conf = conf.value / 100;
 	state.form.username = userInfos.value.userName;
 	state.form.startTime = formatDate(new Date(), 'YYYY-mm-dd HH:MM:SS');
 	console.log(state.form);

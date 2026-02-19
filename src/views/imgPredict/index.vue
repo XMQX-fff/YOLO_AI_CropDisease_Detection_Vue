@@ -137,7 +137,7 @@ const recordApi = useRecordApi();
 const { getGreenhouseList } = useGreenhouseApi();
 
 const imageUrl = ref('');
-const conf = ref('');
+const conf = ref(50);
 const weight = ref('');
 const kind = ref('');
 const uploadFile = ref<UploadInstance>();
@@ -246,8 +246,25 @@ const getData = () => {
 
 
 const upData = () => {
+	if (!kind.value) {
+		ElMessage.error('请先选择作物种类！');
+		return;
+	}
+	if (!weight.value) {
+		ElMessage.error('请先选择模型！');
+		return;
+	}
+	if (!conf.value) {
+		ElMessage.error('请先设置置信度阈值！');
+		return;
+	}
+	if (!state.img) {
+		ElMessage.error('请先上传图片！');
+		return;
+	}
+	
 	state.form.weight = weight.value;
-	state.form.conf = (parseFloat(conf.value) / 100);
+	state.form.conf = conf.value / 100;
 	state.form.username = userInfos.value.userName;
 	state.form.inputImg = state.img;
 	state.form.kind = kind.value;
