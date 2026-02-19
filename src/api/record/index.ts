@@ -2,6 +2,7 @@ import request from '/@/utils/request';
 
 /**
  * 记录管理API接口集合
+ * @method addImgRecord 新增图片记录
  * @method getImgRecordList 获取图片识别记录列表
  * @method getImgRecordDetail 获取图片识别记录详情
  * @method deleteImgRecord 删除图片识别记录
@@ -20,6 +21,13 @@ export function useRecordApi() {
                 url: '/api/imgRecords',
                 method: 'get',
                 params
+            });
+        },
+        addImgRecord: (data: object) => {
+            return request({
+                url: '/api/imgRecords',
+                method: 'post',
+                data
             });
         },
         getImgRecordDetail: (id: string) => {

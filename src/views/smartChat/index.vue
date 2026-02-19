@@ -11,7 +11,10 @@
 			<div class="avatar">
 			  {{ message.role === 'user' ? '👤' : '🤖' }}
 			</div>
-			<div class="text">{{ message.content }}</div>
+			<div class="text" v-if="message.role === 'user'">
+			  {{ message.content }}
+			</div>
+			<div class="text" v-else v-html="renderMarkdown(message.content)"></div>
 		  </div>
 		</div>
 		<div v-if="loading" class="message assistant-message">
@@ -78,57 +81,133 @@
 		  '农作物施肥的最佳时间？',
 		  '如何识别植物病害症状？'
 		],
-		apiKey: '' // 请替换为您的DeepSeekAPI密钥
+		apiKey: 'sk-rbwwfonuwpfdaoxcurhgdaklmyazympolaernwmsbuljzuqy' // SiliconFlow API密钥
 	  }
 	},
 	methods: {
-	  selectQuestion(question) {
-		this.userInput = question
-		this.sendMessage()
-	  },
+      // Markdown渲染函数
+      renderMarkdown(text) {
+        if (!text) return ''
+        
+        // 替换标题
+        text = text.replace(/^### (.*$)/gim, '<h3 class="markdown-h3">$1</h3>')
+        text = text.replace(/^## (.*$)/gim, '<h2 class="markdown-h2">$1</h2>')
+        text = text.replace(/^# (.*$)/gim, '<h1 class="markdown-h1">$1</h1>')
+        
+        // 替换粗体
+        text = text.replace(/\*\*(.*?)\*\*/gim, '<strong class="markdown-bold">$1</strong>')
+        
+        // 替换列表
+        text = text.replace(/^\s*\-\s+(.*$)/gim, '<li class="markdown-list-item">$1</li>')
+        text = text.replace(/(<li class="markdown-list-item">[\s\S]*?<\/li>)/gim, '<ul class="markdown-list">$1</ul>')
+        
+        // 替换行内代码
+        text = text.replace(/`(.*?)`/gim, '<code class="markdown-code">$1</code>')
+        
+        // 替换段落
+        text = text.replace(/^(?!<h[1-6]>)(?!<li>)(?!<ul>)(?!<code>)(.*$)/gim, '<p class="markdown-paragraph">$1</p>')
+        
+        return text
+      },
+      selectQuestion(question) {
+        this.userInput = question
+        this.sendMessage()
+      },
 	  async sendMessage() {
-		if (!this.userInput.trim() || this.loading) return
-  
-		const userMessage = this.userInput.trim()
-		this.messages.push({
-		  role: 'user',
-		  content: userMessage
+	if (!this.userInput.trim() || this.loading) return
+
+	const userMessage = this.userInput.trim()
+	this.messages.push({
+	  role: 'user',
+	  content: userMessage
+	})
+	
+	this.userInput = ''
+	this.loading = true
+
+	try {
+	  // 添加一个临时的assistant消息用于显示流式输出
+	  const assistantMessageIndex = this.messages.length
+	  this.messages.push({
+		role: 'assistant',
+		content: ''
+	  })
+	  
+	  // 发送流式请求
+	  const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+		method: 'POST',
+		headers: {
+		  'Authorization': `Bearer ${this.apiKey}`,
+		  'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+		  model: 'Pro/zai-org/GLM-4.7',
+		  messages: [
+			...this.messages.map(msg => ({
+			  role: msg.role,
+			  content: msg.content
+			}))
+		  ],
+		  stream: true
 		})
-		
-		this.userInput = ''
-		this.loading = true
-  
-		try {
-		  const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
-			model: 'deepseek-chat',
-			messages: [
-			  ...this.messages.map(msg => ({
-				role: msg.role,
-				content: msg.content
-			  }))
-			],
-			stream: false
-		  }, {
-			headers: {
-			  'Authorization': `Bearer ${this.apiKey}`,
-			  'Content-Type': 'application/json'
-			}
-		  })
-  
-		  this.messages.push({
-			role: 'assistant',
-			content: response.data.choices[0].message.content
-		  })
-		} catch (error) {
-		  this.$message.error('发送消息失败，请稍后重试')
-		  console.error('Error:', error)
-		} finally {
-		  this.loading = false
-		  this.$nextTick(() => {
-			this.scrollToBottom()
-		  })
+	  })
+	  
+	  if (!response.ok) {
+		throw new Error(`HTTP error! status: ${response.status}`)
+	  }
+	  
+	  const reader = response.body.getReader()
+	  const decoder = new TextDecoder()
+	  let fullContent = ''
+	  
+	  while (true) {
+		const { done, value } = await reader.read()
+		if (done) {
+		  break
 		}
-	  },
+		
+		const chunk = decoder.decode(value, { stream: true })
+		const lines = chunk.split('\n')
+		
+		for (const line of lines) {
+		  if (line.startsWith('data: ')) {
+			const data = line.slice(6)
+			if (data === '[DONE]') {
+			  continue
+			}
+			
+			try {
+			  const parsed = JSON.parse(data)
+			  const delta = parsed.choices[0].delta
+			  if (delta.content) {
+				fullContent += delta.content
+				// 实时更新assistant消息内容
+				this.messages[assistantMessageIndex].content = fullContent
+				// 滚动到底部
+				this.$nextTick(() => {
+				  this.scrollToBottom()
+				})
+			  }
+			} catch (e) {
+			  console.error('Error parsing chunk:', e)
+			}
+		  }
+		}
+	  }
+	} catch (error) {
+	  this.$message.error('发送消息失败，请稍后重试')
+	  console.error('Error:', error)
+	  // 移除最后一个空的assistant消息
+	  if (this.messages[this.messages.length - 1].content === '') {
+		this.messages.pop()
+	  }
+	} finally {
+	  this.loading = false
+	  this.$nextTick(() => {
+		this.scrollToBottom()
+	  })
+	}
+  },
 	  scrollToBottom() {
 		const container = this.$refs.messageContainer
 		container.scrollTop = container.scrollHeight
@@ -311,9 +390,64 @@
   }
   
   @keyframes loading {
-	0% { content: '.'; }
-	33% { content: '..'; }
-	66% { content: '...'; }
+    0% { content: '.'; }
+    33% { content: '..'; }
+    66% { content: '...'; }
+  }
+  
+  /* Markdown样式 */
+  .markdown-h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 15px 0 10px 0;
+    color: #2d3748;
+  }
+  
+  .markdown-h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 12px 0 8px 0;
+    color: #2d3748;
+  }
+  
+  .markdown-h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 10px 0 6px 0;
+    color: #2d3748;
+  }
+  
+  .markdown-paragraph {
+    margin: 8px 0;
+    line-height: 1.6;
+    color: #4a5568;
+  }
+  
+  .markdown-bold {
+    font-weight: 700;
+    color: #2d3748;
+  }
+  
+  .markdown-list {
+    margin: 10px 0 10px 20px;
+    padding-left: 0;
+  }
+  
+  .markdown-list-item {
+    margin: 5px 0;
+    line-height: 1.6;
+    color: #4a5568;
+    list-style-type: disc;
+    list-style-position: outside;
+  }
+  
+  .markdown-code {
+    background-color: #f7fafc;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    color: #e53e3e;
   }
   
   /* 自定义滚动条样式 */

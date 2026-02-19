@@ -3,6 +3,12 @@
 		<div class="system-predict-padding layout-padding-auto layout-padding-view">
 			<div class="header">
 				<div class="weight">
+					<el-select v-model="selectedGreenhouse" placeholder="请选择温室" size="large" style="width: 200px" value-key="id">
+						<el-option v-for="greenhouse in greenhouses" :key="greenhouse.id" :label="greenhouse.name"
+							:value="greenhouse" />
+					</el-select>
+				</div>
+				<div class="weight">
 					<el-select v-model="kind" placeholder="请选择作物种类" size="large" style="width: 200px" @change="getData">
 						<el-option v-for="item in state.kind_items" :key="item.value" :label="item.label"
 							:value="item.value" />
@@ -24,27 +30,26 @@
 					<el-button type="primary" @click="upData" class="predict-button">开始预测</el-button>
 				</div>
 			</div>
-			<!-- 图片显示区域修改 -->
 			<el-row :gutter="10" class="image-display">
-				<!-- 原图展示 -->
 				<el-col :span="8">
 					<el-card shadow="hover" class="card">
 						<div class="image-title">原图片</div>
 						<el-upload v-model="state.img" ref="uploadFile" class="avatar-uploader"
-							action="http://localhost:9999/files/upload" :show-file-list="false"
-							:on-success="handleAvatarSuccessone">
-							<el-image v-if="imageUrl" :src="imageUrl" class="preview-image" fit="contain" />
-							<div v-else class="uploader-content"> 
-								<el-icon class="upload-icon">
-									<Plus />
-								</el-icon>
-								<div class="upload-text">点击上传图片</div>
-							</div>
-						</el-upload>
+				action="http://localhost:9999/files/upload" :show-file-list="false"
+				:on-success="handleAvatarSuccessone">
+				<div class="image-wrapper" @click.stop="triggerFileUpload">
+					<el-image v-if="imageUrl" :src="imageUrl" class="preview-image" fit="contain" />
+					<div v-else class="uploader-content"> 
+						<el-icon class="upload-icon">
+							<Plus />
+						</el-icon>
+						<div class="upload-text">点击上传图片</div>
+					</div>
+				</div>
+			</el-upload>
 					</el-card>
 				</el-col>
 
-				<!-- 预测结果图 -->
 				<el-col :span="8">
 					<el-card shadow="hover" class="card">
 						<div class="image-title">预测结果</div>
@@ -58,12 +63,14 @@
 						</div>
 					</el-card>
 				</el-col>
-				<!-- 智能建议 -->
 				<el-col :span="8">
 					<el-card shadow="hover" class="card">
 						<div class="image-title">智能建议</div>
-						<div class="suggestion-content" v-if="state.aiSuggestion">
-							<div class="suggestion-text">{{ state.aiSuggestion }}</div>
+						<div class="suggestion-content" v-if="state.markdownContent">
+							<div class="suggestion-text" v-html="state.markdownContent"></div>
+						</div>
+						<div v-else-if="state.suggestionLoading" class="loading-indicator">
+							正在分析检测结果，生成智能建议...
 						</div>
 						<div v-else class="placeholder">
 							<el-icon>
@@ -122,9 +129,12 @@ import { storeToRefs } from 'pinia';
 import { formatDate } from '/@/utils/formatTime';
 import axios from 'axios';
 
-// 导入API
 import { usePredictApi } from '/@/api/predict';
+import { useRecordApi } from '/@/api/record';
+import { useGreenhouseApi } from '/@/api/greenhouse';
 const predictApi = usePredictApi();
+const recordApi = useRecordApi();
+const { getGreenhouseList } = useGreenhouseApi();
 
 const imageUrl = ref('');
 const conf = ref('');
@@ -133,8 +143,9 @@ const kind = ref('');
 const uploadFile = ref<UploadInstance>();
 const stores = useUserInfo();
 const { userInfos } = storeToRefs(stores);
-// 新增响应式变量
 const predictedImageUrl = ref('');
+const greenhouses = ref([]);
+const selectedGreenhouse = ref(null);
 const state = reactive({
 	weight_items: [] as any,
 	kind_items: [
@@ -191,10 +202,30 @@ const state = reactive({
 	},
 	aiSuggestion: '',
 	suggestionLoading: false,
+	markdownContent: '',
 });
 
 const formatTooltip = (val: number) => {
 	return val / 100
+}
+
+function renderMarkdown(text) {
+  if (!text) return '';
+  
+  text = text.replace(/^### (.*$)/gim, '<h3 class="markdown-h3">$1</h3>');
+  text = text.replace(/^## (.*$)/gim, '<h2 class="markdown-h2">$1</h2>');
+  text = text.replace(/^# (.*$)/gim, '<h1 class="markdown-h1">$1</h1>');
+  
+  text = text.replace(/\*\*(.*)\*\*/gim, '<strong class="markdown-bold">$1</strong>');
+  
+  text = text.replace(/^\- (.*$)/gim, '<li class="markdown-list-item">$1</li>');
+  text = text.replace(/(<li class="markdown-list-item">.*<\/li>)/s, '<ul class="markdown-list">$1</ul>');
+  
+  text = text.replace(/`(.*)`/gim, '<code class="markdown-code">$1</code>');
+  
+  text = text.replace(/^(?!<h|\<li|\<ul|\<code).*$/gim, '<p class="markdown-paragraph">$&</p>');
+  
+  return text;
 }
 
 const handleAvatarSuccessone: UploadProps['onSuccess'] = (response, uploadFile) => {
@@ -228,12 +259,10 @@ const upData = () => {
 			try {
 				res.data = JSON.parse(res.data);
 
-				// 如果 res.data.label 是字符串，则解析为数组
 				if (typeof res.data.label === 'string') {
 					res.data.label = JSON.parse(res.data.label);
 				}
 
-				// 确保 res.data.label 是数组后再调用 map
 				if (Array.isArray(res.data.label)) {
 					state.predictionResult.label = res.data.label.map(item => item.replace(/\\u([\dA-Fa-f]{4})/g, (_, code) =>
 						String.fromCharCode(parseInt(code, 16))
@@ -244,27 +273,51 @@ const upData = () => {
 				state.predictionResult.confidence = res.data.confidence;
 				state.predictionResult.allTime = res.data.allTime;
 
-				// 覆盖原图片
 				if (res.data.outImg) {
-					// 使用服务器返回的新图片路径
 					predictedImageUrl.value = res.data.outImg;
 				} else {
-					// 否则保留原图片路径
 					imageUrl.value = imageUrl.value;
 				}
 				console.log(state.predictionResult);
+				
+				const recordData = {
+					weight: weight.value,
+					inputImg: state.img,
+					outImg: res.data.outImg || '',
+					confidence: Array.isArray(state.predictionResult.confidence) 
+						? state.predictionResult.confidence.join(',') 
+						: String(state.predictionResult.confidence),
+					allTime: state.predictionResult.allTime,
+					conf: String(state.form.conf),
+					label: Array.isArray(state.predictionResult.label) 
+						? state.predictionResult.label.join(',') 
+						: String(state.predictionResult.label),
+					username: userInfos.value.userName,
+					kind: state.kind_items.find(item => item.value === kind.value)?.label || kind.value,
+					startTime: state.form.startTime,
+					greenhouseId: selectedGreenhouse.value?.id
+				};
+				
+				recordApi.addImgRecord(recordData).then((recordRes) => {
+					if (recordRes.code == 200 || recordRes.code == '200') {
+						console.log('记录保存成功');
+					} else {
+						console.error('记录保存失败:', recordRes.msg);
+					}
+				}).catch((error) => {
+					console.error('保存记录出错:', error);
+				});
+				
 			} catch (error) {
 				console.error('解析 JSON 时出错:', error);
 			}
 			ElMessage.success('预测成功！');
-			// 自动获取AI建议
 			getAISuggestion();
 		} else {
 			ElMessage.error(res.msg);
 		}
 	});
 };
-// 获取AI建议
 const getAISuggestion = async () => {
 	if (!state.predictionResult.label) {
 		ElMessage.warning('请先进行预测');
@@ -273,59 +326,94 @@ const getAISuggestion = async () => {
 	
 	state.suggestionLoading = true;
 	try {
-		const apiKey = ''; // 请替换为您的DeepSeekAPI密钥
+		const apiKey = 'sk-rbwwfonuwpfdaoxcurhgdaklmyazympolaernwmsbuljzuqy';
 		
-		// 构建更详细的提示信息
-		const prompt = `作为一个专业的农作物病害专家，请对以下情况进行详细分析：
+		const cropType = state.kind_items.find(item => item.value === kind.value)?.label || kind.value;
+		const diseases = Array.isArray(state.predictionResult.label) 
+			? state.predictionResult.label.join('、') 
+			: state.predictionResult.label;
+		const confidences = formatConfidenceArray(state.predictionResult.confidence).join('、');
+		
+		const prompt = `作为农作物病害专家，针对以下情况提供简要建议：
 
-1. 基本信息：
-- 作物类型：${state.kind_items.find(item => item.value === kind.value)?.label || kind.value}
-- 检测到的病害：${state.predictionResult.label}
-- 检测置信度：${state.predictionResult.confidence}
+作物类型：${cropType}
+检测病害：${diseases}
+置信度：${confidences}
 
-2. 请提供以下方面的专业分析：
-(1) 病害危害程度：
-1.当前病害的严重程度评估
-2.对作物生长的影响
-3.可能造成的产量损失
+请在200字以内简要说明：
+1. 病害严重性
+2. 关键防治措施
+3. 日常注意事项
 
-(2) 防治建议：
-1.立即可采取的防治措施
-2.推荐使用的农药或生物防治方法
-3.施药注意事项和防护措施
+语言简洁明了。`;
 
-(3) 预防措施：
-1.日常管理建议
-2.环境控制要点
-3.预防性保护措施
-
-请用专业但易懂的语言回答，并尽可能提供具体的操作建议。`;
-
-const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
-			model: 'deepseek-chat',
-			messages: [{
-				role: 'user',
-				content: prompt
-			}],
-			stream: false
-		}, {
+		state.markdownContent = '';
+		let fullContent = '';
+		
+		const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+			method: 'POST',
 			headers: {
 				'Authorization': `Bearer ${apiKey}`,
 				'Content-Type': 'application/json'
-			}
+			},
+			body: JSON.stringify({
+				model: 'Pro/zai-org/GLM-4.7',
+				messages: [
+					{ role: 'user', content: prompt }
+				],
+				stream: true
+			})
 		});
 
-		state.aiSuggestion = response.data.choices[0].message.content;
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+		
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder();
+		
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) {
+				break;
+			}
+			
+			const chunk = decoder.decode(value, { stream: true });
+			const lines = chunk.split('\n');
+			
+			for (const line of lines) {
+				if (line.startsWith('data: ')) {
+					const data = line.slice(6);
+					if (data === '[DONE]') {
+						continue;
+					}
+					
+					try {
+						const parsed = JSON.parse(data);
+						const delta = parsed.choices[0].delta;
+						if (delta.content) {
+							fullContent += delta.content;
+							requestAnimationFrame(() => {
+								state.markdownContent = renderMarkdown(fullContent);
+							});
+						}
+					} catch (e) {
+						console.error('Error parsing chunk:', e);
+					}
+				}
+			}
+		}
+		
 		ElMessage.success('分析完成');
 	} catch (error) {
 		console.error('获取AI建议出错:', error);
+		state.markdownContent = `<div class="error-message">获取建议失败：${error.message}</div>`;
 		ElMessage.error('获取建议失败，请检查网络连接或API密钥是否正确');
 	} finally {
 		state.suggestionLoading = false;
 	}
 };
 
-// 格式化函数
 const formatLabelArray = (label: any) => {
 	if (Array.isArray(label)) {
 		return label.map(item => item.replace(/[\[\]"]/g, '').trim());
@@ -362,8 +450,30 @@ const formatTime = (time: string) => {
 	return parseFloat(time).toFixed(3) + '秒';
 };
 
+const triggerFileUpload = () => {
+	const fileInput = document.querySelector('.avatar-uploader input[type="file"]') as HTMLInputElement;
+	if (fileInput) {
+		fileInput.click();
+	}
+};
+
+const fetchGreenhouses = async () => {
+	try {
+		const response = await getGreenhouseList({});
+		if (response.data && response.data.records) {
+			greenhouses.value = response.data.records.map(item => ({
+				id: item.id,
+				name: item.greenhouseName
+			}));
+		}
+	} catch (error) {
+		console.error('获取温室列表失败:', error);
+	}
+};
+
 onMounted(() => {
 	getData();
+	fetchGreenhouses();
 });
 </script>
 
@@ -494,25 +604,41 @@ onMounted(() => {
 		}
 
 		.avatar-uploader {
-			width: 100%;
-			height: 358px;
-			border: 2px dashed rgba(72, 187, 120, 0.3);
-			border-radius: 12px;
-			cursor: pointer;
-			position: relative;
-			overflow: hidden;
-			transition: all 0.3s ease;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			background: rgba(72, 187, 120, 0.05);
+					width: 100%;
+					height: 358px;
+					border: 2px dashed rgba(72, 187, 120, 0.3);
+					border-radius: 12px;
+					cursor: pointer;
+					position: relative;
+					overflow: hidden;
+					transition: all 0.3s ease;
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					background: rgba(72, 187, 120, 0.05);
 
-			&:hover {
-				border-color: #48bb78;
-				background: rgba(72, 187, 120, 0.1);
-				transform: scale(1.02);
-			}
-		}
+					&:hover {
+						border-color: #48bb78;
+						background: rgba(72, 187, 120, 0.1);
+						transform: scale(1.02);
+					}
+				}
+
+				.image-wrapper {
+					width: 100%;
+					height: 100%;
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					cursor: pointer;
+					position: relative;
+					z-index: 1;
+					
+					&:hover {
+						opacity: 0.9;
+						transition: opacity 0.3s ease;
+					}
+				}
 
 		.preview-image {
 			width: 100%;
@@ -573,6 +699,19 @@ onMounted(() => {
 				color: #4a5568;
 			}
 		}
+		
+		.loading-indicator {
+			height: 358px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: #4a5568;
+			font-size: 14px;
+			animation: pulse 1.5s ease-in-out infinite;
+			background: linear-gradient(135deg, rgba(72, 187, 120, 0.05) 0%, rgba(47, 133, 90, 0.05) 100%);
+			border-radius: 12px;
+			border: 1px solid rgba(72, 187, 120, 0.2);
+		}
 
 		.suggestion-content {
 			height: 358px;
@@ -586,7 +725,6 @@ onMounted(() => {
 				font-size: 14px;
 				line-height: 1.8;
 				color: #2d3748;
-				white-space: pre-wrap;
 				text-align: justify;
 				background: rgba(255, 255, 255, 0.95);
 				padding: 15px;
@@ -735,6 +873,78 @@ onMounted(() => {
 	&:active {
 		transform: translateY(-1px);
 		box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+	}
+}
+
+.markdown-h1 {
+	font-size: 24px;
+	font-weight: 700;
+	margin: 20px 0 15px 0;
+	color: #2d3748;
+}
+
+.markdown-h2 {
+	font-size: 20px;
+	font-weight: 600;
+	margin: 18px 0 12px 0;
+	color: #2d3748;
+}
+
+.markdown-h3 {
+	font-size: 18px;
+	font-weight: 600;
+	margin: 16px 0 10px 0;
+	color: #2d3748;
+}
+
+.markdown-paragraph {
+	margin: 10px 0;
+	line-height: 1.6;
+	color: #4a5568;
+}
+
+.markdown-bold {
+	font-weight: 700;
+	color: #2d3748;
+}
+
+.markdown-list {
+	margin: 10px 0 10px 20px;
+	padding-left: 0;
+}
+
+.markdown-list-item {
+	margin: 5px 0;
+	line-height: 1.6;
+	color: #4a5568;
+	list-style-type: disc;
+	list-style-position: outside;
+}
+
+.markdown-code {
+	background-color: #f7fafc;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-family: 'Courier New', Courier, monospace;
+	font-size: 14px;
+	color: #e53e3e;
+}
+
+.error-message {
+	padding: 15px;
+	background-color: #fed7d7;
+	border-left: 4px solid #f56565;
+	color: #742a2a;
+	border-radius: 4px;
+	margin-top: 10px;
+}
+
+@keyframes pulse {
+	0%, 100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.7;
 	}
 }
 </style>
