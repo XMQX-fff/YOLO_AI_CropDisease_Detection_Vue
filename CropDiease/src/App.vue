@@ -1,10 +1,29 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { ElMessageBox, ElMessage } from 'element-plus';
+import { User, SwitchButton } from '@element-plus/icons-vue';
+import { useLoginApi } from '/@/api/login';
 
 const route = useRoute();
 const router = useRouter();
+const loginApi = useLoginApi();
 const weatherData = ref({ temperature: '25', condition: '晴天', humidity: '65%' });
+
+// 用户信息
+const userInfo = ref<any>(null);
+
+// 从 localStorage 加载用户信息
+const loadUserInfo = () => {
+  try {
+    const storedUserInfo = localStorage.getItem('userInfo');
+    if (storedUserInfo) {
+      userInfo.value = JSON.parse(storedUserInfo);
+    }
+  } catch (err) {
+    console.error('加载用户信息失败:', err);
+  }
+};
 
 // 获取天气数据
 const fetchWeatherData = async () => {
@@ -37,9 +56,39 @@ const fetchWeatherData = async () => {
   }
 }
 
+// 退出登录
+const handleLogout = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要退出登录吗？',
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    );
+    
+    // 清除本地存储
+    localStorage.removeItem('token');
+    localStorage.removeItem('userInfo');
+    userInfo.value = null;
+    
+    ElMessage.success('退出登录成功！');
+    
+    // 跳转到登录页
+    setTimeout(() => {
+      router.push('/login');
+    }, 500);
+  } catch (error) {
+    console.log('取消退出登录');
+  }
+};
+
 onMounted(() => {
   currentPath.value = route.path;
   fetchWeatherData(); // 获取天气数据
+  loadUserInfo(); // 加载用户信息
 });
 
 // 导航菜单数据
@@ -61,7 +110,7 @@ const navMenu = [
     name: '智能温室',
     children: [
       { path: '/infoGreenhouse', name: '温室管理' },
-      { path: '/infoGreenhouse/env', name: '环境监测' },
+      { path: '/detailsEnv', name: '环境监测' },
       { path: '/infoGreenhouse/crop', name: '作物管理' },
       { path: '/infoGreenhouse/device', name: '设备控制' },
       { path: '/infoGreenhouse/analysis', name: '数据分析' },
@@ -75,13 +124,13 @@ const navMenu = [
     name: '环境检测',
     children: [
       { path: '/detailsEnv', name: '环境概览' },
-      { path: '/detailsEnv/realtime', name: '实时数据' },
-      { path: '/detailsEnv/history', name: '历史记录' },
-      { path: '/detailsEnv/device', name: '设备管理' },
-      { path: '/detailsEnv/alert', name: '告警设置' },
-      { path: '/detailsEnv/analysis', name: '数据分析' },
-      { path: '/detailsEnv/report', name: '报表导出' },
-      { path: '/detailsEnv/setting', name: '系统设置' }
+      { path: '/detailsEnv', name: '实时数据' },
+      { path: '/detailsEnv', name: '历史记录' },
+      { path: '/detailsEnv', name: '设备管理' },
+      { path: '/detailsEnv', name: '告警设置' },
+      { path: '/detailsEnv', name: '数据分析' },
+      { path: '/detailsEnv', name: '报表导出' },
+      { path: '/detailsEnv', name: '系统设置' }
     ]
   },
   { 
@@ -161,6 +210,11 @@ watch(
   }
 );
 
+// 判断是否是登录页面
+const isLoginPage = computed(() => {
+  return route.path === '/login';
+});
+
 // 根据天气状况计算对应的图标
 const getWeatherIcon = computed(() => {
   const condition = weatherData.value.condition;
@@ -186,70 +240,103 @@ const getWeatherIcon = computed(() => {
 
 <template>
   <div class="app">
-    <!-- 顶部导航栏 -->
-    <header class="app-header">
-      <!-- Logo -->
-      <div class="logo">
-        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=agricultural%20logo%20with%20green%20color%20scheme&image_size=square" alt="农业中国" class="logo-img">
-        <span class="logo-text">农业中国</span>
-      </div>
-      
-      <!-- 主导航菜单 -->
-      <nav class="main-nav">
-        <ul class="nav-list">
-          <li 
-            v-for="item in navMenu" 
-            :key="item.path"
-            :class="['nav-item', (currentPath === item.path || (item.children && isChildActive(item.children))) ? 'active' : '']"
-            @click="navigateTo(item.path)"
-          >
-            {{ item.name }}
-          </li>
-        </ul>
-      </nav>
-      
-      <!-- 右侧功能区 -->
-      <div class="header-right">
-        <!-- 搜索栏 -->
-        <div class="search-box">
-          <input type="text" placeholder="搜索" class="search-input">
-          <button class="search-btn">搜索</button>
+    <!-- 登录页面 - 只显示登录内容 -->
+    <router-view v-if="isLoginPage" />
+    
+    <!-- 主应用布局 -->
+    <template v-else>
+      <!-- 顶部导航栏 -->
+      <header class="app-header">
+        <!-- Logo -->
+        <div class="logo">
+          <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=agricultural%20logo%20with%20green%20color%20scheme&image_size=square" alt="农业中国" class="logo-img">
+          <span class="logo-text">农业中国</span>
         </div>
         
-        <!-- 天气信息 -->
-        <div class="weather-info">
-          <span class="weather-icon">{{ getWeatherIcon }}</span>
-          <span class="weather-text">{{ weatherData.temperature }}°C {{ weatherData.condition }}</span>
+        <!-- 主导航菜单 -->
+        <nav class="main-nav">
+          <ul class="nav-list">
+            <li 
+              v-for="item in navMenu" 
+              :key="item.path"
+              :class="['nav-item', (currentPath === item.path || (item.children && isChildActive(item.children))) ? 'active' : '']"
+              @click="navigateTo(item.path)"
+            >
+              {{ item.name }}
+            </li>
+          </ul>
+        </nav>
+        
+        <!-- 右侧功能区 -->
+        <div class="header-right">
+          <!-- 搜索栏 -->
+          <div class="search-box">
+            <input type="text" placeholder="搜索" class="search-input">
+            <button class="search-btn">搜索</button>
+          </div>
+          
+          <!-- 天气信息 -->
+          <div class="weather-info">
+            <span class="weather-icon">{{ getWeatherIcon }}</span>
+            <span class="weather-text">{{ weatherData.temperature }}°C {{ weatherData.condition }}</span>
+          </div>
+          
+          <!-- 用户头像和下拉菜单 -->
+          <el-dropdown class="user-dropdown" @command="(command: string) => { if (command === 'logout') handleLogout(); else if (command === 'profile') router.push('/personal'); }">
+            <div class="user-avatar-wrapper">
+              <div class="user-avatar">
+                <el-icon :size="20">
+                  <User />
+                </el-icon>
+              </div>
+              <span class="user-name">{{ userInfo?.username || userInfo?.name || '用户' }}</span>
+              <el-icon class="dropdown-icon">
+                <SwitchButton />
+              </el-icon>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="profile">
+                  <el-icon class="dropdown-item-icon"><User /></el-icon>
+                  个人中心
+                </el-dropdown-item>
+                <el-dropdown-item divided command="logout">
+                  <el-icon class="dropdown-item-icon"><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
-      </div>
-    </header>
-    
-    <!-- 主内容区域 -->
-    <div class="main-container">
-      <!-- 左侧二级菜单 -->
-      <aside class="side-nav">
-        <ul class="side-nav-list">
-          <li 
-            v-for="child in currentSubMenu" 
-            :key="child.path"
-            :class="['side-nav-item', currentPath === child.path ? 'active' : '']"
-            @click="navigateTo(child.path)"
-          >
-            {{ child.name }}
-          </li>
-        </ul>
-      </aside>
+      </header>
       
-      <!-- 路由视图 -->
-      <main class="app-main">
-        <router-view />
-      </main>
-    </div>
-    
-    <!-- 页脚 -->
-    <footer class="app-footer">
-      <p>&copy; 2026 农业中国 - 智慧农业解决方案</p>
-    </footer>
+      <!-- 主内容区域 -->
+      <div class="main-container">
+        <!-- 左侧二级菜单 -->
+        <aside class="side-nav">
+          <ul class="side-nav-list">
+            <li 
+              v-for="child in currentSubMenu" 
+              :key="child.path"
+              :class="['side-nav-item', currentPath === child.path ? 'active' : '']"
+              @click="navigateTo(child.path)"
+            >
+              {{ child.name }}
+            </li>
+          </ul>
+        </aside>
+        
+        <!-- 路由视图 -->
+        <main class="app-main">
+          <router-view />
+        </main>
+      </div>
+      
+      <!-- 页脚 -->
+      <footer class="app-footer">
+        <p>&copy; 2026 农业中国 - 智慧农业解决方案</p>
+      </footer>
+    </template>
   </div>
 </template>
 
@@ -399,6 +486,55 @@ body {
 
 .weather-icon {
   font-size: 18px;
+}
+
+/* 用户下拉菜单 */
+.user-dropdown {
+  cursor: pointer;
+}
+
+.user-avatar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.user-avatar-wrapper:hover {
+  background-color: #f7fafc;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #3182ce;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-name {
+  font-size: 14px;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.dropdown-icon {
+  font-size: 12px;
+  color: #718096;
+  transition: transform 0.2s ease;
+}
+
+.user-dropdown:hover .dropdown-icon {
+  transform: rotate(180deg);
+}
+
+.dropdown-item-icon {
+  margin-right: 8px;
 }
 
 /* 主内容容器 */

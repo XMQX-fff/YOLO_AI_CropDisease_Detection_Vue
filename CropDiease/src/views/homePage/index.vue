@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useGreenhouseApi } from '/@/api/greenhouse'
+
+// 温室API
+const greenhouseApi = useGreenhouseApi()
 
 // 统计数据
 const statistics = ref({
@@ -22,17 +26,61 @@ const weatherInfo = ref({
 })
 
 // 种植作物数据
-const cropTypes = ref([
-  { name: '1号温室', crop: '玉米', status: '生长良好', plantCount: 350, diseaseCount: 20 },
-  { name: '2号温室', crop: '水稻', status: '生长良好', plantCount: 400, diseaseCount: 15 },
-  { name: '3号温室', crop: '小麦', status: '需要关注', plantCount: 350, diseaseCount: 18 },
-  { name: '4号温室', crop: '马铃薯', status: '生长良好', plantCount: 250, diseaseCount: 12 },
-  { name: '5号温室', crop: '棉花', status: '生长良好', plantCount: 300, diseaseCount: 16 },
-  { name: '6号温室', crop: '苹果', status: '需要关注', plantCount: 8, diseaseCount: 14 },
-  { name: '7号温室', crop: '葡萄', status: '生长良好', plantCount: 300, diseaseCount: 17 },
-  { name: '8号温室', crop: '番茄', status: '生长良好', plantCount: 300, diseaseCount: 14 },
-  { name: '9号温室', crop: '草莓', status: '生长良好', plantCount: 300, diseaseCount: 15 }
-])
+const cropTypes = ref([])
+
+// 分页相关
+const currentPage = ref(1)
+const pageSize = ref(6)
+const total = ref(0)
+
+// 获取温室数据
+const fetchGreenhouseData = async () => {
+  try {
+    const res = await greenhouseApi.getWithDiseaseCountPage({
+      pageNum: currentPage.value,
+      pageSize: pageSize.value
+    })
+    if (res.code === '0' || res.code === 0) {
+      const data = res.data.records || res.data.list || res.data
+      total.value = res.data.total || data.length
+      
+      cropTypes.value = data.map((item: any) => {
+        return {
+          id: item.greenhouse?.id,
+          name: item.greenhouse?.greenhouseName || `${item.greenhouse?.id}号温室`,
+          crop: item.greenhouse?.cropType || '未知作物',
+          status: item.totalDiseaseCount > 5 ? '需要关注' : '生长良好',
+          plantCount: item.greenhouse?.quantity || 0,
+          diseaseCount: item.totalDiseaseCount || 0
+        }
+      })
+    }
+  } catch (err) {
+    console.error('获取温室数据失败:', err)
+    total.value = 9
+    cropTypes.value = [
+      { name: '1号温室', crop: '玉米', status: '生长良好', plantCount: 350, diseaseCount: 20 },
+      { name: '2号温室', crop: '水稻', status: '生长良好', plantCount: 400, diseaseCount: 15 },
+      { name: '3号温室', crop: '小麦', status: '需要关注', plantCount: 350, diseaseCount: 18 },
+      { name: '4号温室', crop: '马铃薯', status: '生长良好', plantCount: 250, diseaseCount: 12 },
+      { name: '5号温室', crop: '棉花', status: '生长良好', plantCount: 300, diseaseCount: 16 },
+      { name: '6号温室', crop: '苹果', status: '需要关注', plantCount: 8, diseaseCount: 14 }
+    ]
+  }
+}
+
+// 分页改变
+const handlePageChange = (page: number) => {
+  currentPage.value = page
+  fetchGreenhouseData()
+}
+
+// 每页大小改变
+const handleSizeChange = (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1
+  fetchGreenhouseData()
+}
 
 // 农业链接
 const agricultureLinks = ref([
@@ -105,6 +153,7 @@ const fetchWeatherData = async () => {
 
 onMounted(() => {
   fetchWeatherData() // 获取天气数据
+  fetchGreenhouseData() // 获取温室数据
 })
 </script>
 
@@ -276,6 +325,17 @@ onMounted(() => {
                       </div>
                     </div>
                   </div>
+                </div>
+                <div class="pagination-wrapper">
+                  <el-pagination
+                    v-model:current-page="currentPage"
+                    v-model:page-size="pageSize"
+                    :page-sizes="[3, 6, 9, 12]"
+                    :total="total"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    @size-change="handleSizeChange"
+                    @current-change="handlePageChange"
+                  />
                 </div>
               </div>
             </div>
@@ -590,6 +650,16 @@ onMounted(() => {
 .crop-status.warning {
   color: #dc3545;
   background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* 分页组件样式 */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
 }
 
 /* 农业链接样式 */

@@ -211,44 +211,49 @@ onMounted(() => {
 
 <style scoped>
 .smart-chat-container {
-  padding: 24px;
+  padding: 30px;
   background-color: #ffffff;
-  min-height: calc(100vh - 120px);
+  min-height: 100%;
 }
 
 .page-content {
-  max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
 }
 
 .page-header {
-  margin-bottom: 32px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 16px 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e0e0e0;
 }
 
 .page-title {
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 8px 0;
+  color: #333;
+  margin: 0;
 }
 
 .page-subtitle {
   font-size: 14px;
-  color: #6b7280;
-  margin: 0;
+  color: #666;
+  margin: 8px 0 0 0;
 }
 
 .chat-section {
   background-color: #f9fafb;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 600px;
+  min-height: 70vh;
+  flex: 1;
 }
 
 .chat-messages {
@@ -522,7 +527,7 @@ onMounted(() => {
   }
   
   .chat-section {
-    min-height: 500px;
+    min-height: 50vh;
   }
   
   .chat-messages {

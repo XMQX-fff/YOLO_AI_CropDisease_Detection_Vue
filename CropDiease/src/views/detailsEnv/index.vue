@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
+import * as echarts from 'echarts'
 
 // 环境数据
 const envData = ref({
@@ -76,6 +77,128 @@ const devices = ref([
   { id: 6, name: '土壤pH传感器', status: '需要校准', lastOnline: '2026-02-20 15:25', location: '1号温室' }
 ])
 
+// 图表引用
+const temperatureChartRef = ref<HTMLElement>()
+const humidityChartRef = ref<HTMLElement>()
+const lightChartRef = ref<HTMLElement>()
+const soilMoistureChartRef = ref<HTMLElement>()
+
+// 图表实例
+let temperatureChart: echarts.ECharts | null = null
+let humidityChart: echarts.ECharts | null = null
+let lightChart: echarts.ECharts | null = null
+let soilMoistureChart: echarts.ECharts | null = null
+
+// 生成环境监测历史数据
+const generateEnvData = () => {
+  const hours = []
+  const temperatures = []
+  const humidities = []
+  const lights = []
+  const soilMoistures = []
+  
+  for (let i = 23; i >= 0; i--) {
+    const hour = new Date()
+    hour.setHours(hour.getHours() - i)
+    hours.push(`${hour.getHours().toString().padStart(2, '0')}:00`)
+    
+    // 基于当前环境数据生成合理的波动
+    temperatures.push(20 + Math.random() * 10)
+    humidities.push(50 + Math.random() * 30)
+    lights.push(5000 + Math.random() * 5000)
+    soilMoistures.push(35 + Math.random() * 20)
+  }
+  
+  return { hours, temperatures, humidities, lights, soilMoistures }
+}
+
+// 初始化图表
+const initCharts = async () => {
+  await nextTick()
+  
+  const envChartData = generateEnvData()
+  
+  // 温度图表
+  if (temperatureChartRef.value) {
+    temperatureChart = echarts.init(temperatureChartRef.value)
+    temperatureChart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      yAxis: { type: 'value', name: '温度(°C)' },
+      series: [{
+        name: '温度',
+        type: 'line',
+        smooth: true,
+        data: envChartData.temperatures,
+        areaStyle: { color: 'rgba(40, 167, 69, 0.1)' },
+        lineStyle: { color: '#28a745' },
+        itemStyle: { color: '#28a745' }
+      }]
+    })
+  }
+  
+  // 湿度图表
+  if (humidityChartRef.value) {
+    humidityChart = echarts.init(humidityChartRef.value)
+    humidityChart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      yAxis: { type: 'value', name: '湿度(%)' },
+      series: [{
+        name: '湿度',
+        type: 'line',
+        smooth: true,
+        data: envChartData.humidities,
+        areaStyle: { color: 'rgba(0, 123, 255, 0.1)' },
+        lineStyle: { color: '#007bff' },
+        itemStyle: { color: '#007bff' }
+      }]
+    })
+  }
+  
+  // 光照图表
+  if (lightChartRef.value) {
+    lightChart = echarts.init(lightChartRef.value)
+    lightChart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      yAxis: { type: 'value', name: '光照(lux)' },
+      series: [{
+        name: '光照',
+        type: 'line',
+        smooth: true,
+        data: envChartData.lights,
+        areaStyle: { color: 'rgba(255, 193, 7, 0.1)' },
+        lineStyle: { color: '#ffc107' },
+        itemStyle: { color: '#ffc107' }
+      }]
+    })
+  }
+  
+  // 土壤湿度图表
+  if (soilMoistureChartRef.value) {
+    soilMoistureChart = echarts.init(soilMoistureChartRef.value)
+    soilMoistureChart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      yAxis: { type: 'value', name: '土壤湿度(%)' },
+      series: [{
+        name: '土壤湿度',
+        type: 'line',
+        smooth: true,
+        data: envChartData.soilMoistures,
+        areaStyle: { color: 'rgba(139, 69, 19, 0.1)' },
+        lineStyle: { color: '#8b4513' },
+        itemStyle: { color: '#8b4513' }
+      }]
+    })
+  }
+}
+
 // 天气信息
 const weatherInfo = ref({
   date: '',
@@ -142,6 +265,15 @@ const fetchWeatherData = async () => {
 
 onMounted(() => {
   fetchWeatherData() // 获取天气数据
+  initCharts() // 初始化图表
+})
+
+// 窗口大小变化时调整图表
+window.addEventListener('resize', () => {
+  temperatureChart?.resize()
+  humidityChart?.resize()
+  lightChart?.resize()
+  soilMoistureChart?.resize()
 })
 
 
@@ -346,20 +478,28 @@ onMounted(() => {
             </div>
             <div class="card-body">
               <div class="charts-container">
-                <!-- 温度和湿度图表 -->
+                <!-- 温度图表 -->
                 <div class="chart-item">
-                  <h4>温度和湿度趋势</h4>
-                  <div class="chart-placeholder">
-                    <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=line%20chart%20temperature%20and%20humidity%20trend%20green%20color%20simple%20design&image_size=landscape_16_9" alt="温度和湿度趋势" />
-                  </div>
+                  <h4>温度变化趋势</h4>
+                  <div ref="temperatureChartRef" class="chart-container"></div>
                 </div>
                 
-                <!-- 光照和土壤湿度图表 -->
+                <!-- 湿度图表 -->
                 <div class="chart-item">
-                  <h4>光照和土壤湿度趋势</h4>
-                  <div class="chart-placeholder">
-                    <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=line%20chart%20light%20and%20soil%20moisture%20trend%20green%20color%20simple%20design&image_size=landscape_16_9" alt="光照和土壤湿度趋势" />
-                  </div>
+                  <h4>湿度变化趋势</h4>
+                  <div ref="humidityChartRef" class="chart-container"></div>
+                </div>
+                
+                <!-- 光照图表 -->
+                <div class="chart-item">
+                  <h4>光照变化趋势</h4>
+                  <div ref="lightChartRef" class="chart-container"></div>
+                </div>
+                
+                <!-- 土壤湿度图表 -->
+                <div class="chart-item">
+                  <h4>土壤湿度变化趋势</h4>
+                  <div ref="soilMoistureChartRef" class="chart-container"></div>
                 </div>
               </div>
             </div>
@@ -662,17 +802,10 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 
-.chart-placeholder {
+.chart-container {
   width: 100%;
-  height: 250px;
+  height: 200px;
   border-radius: 4px;
-  overflow: hidden;
-}
-
-.chart-placeholder img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 /* 设备状态样式 */

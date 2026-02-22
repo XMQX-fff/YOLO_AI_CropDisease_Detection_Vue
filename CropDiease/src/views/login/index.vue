@@ -1,11 +1,25 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
+import { 
+  User, Lock, 
+  Food, DataAnalysis, WarningFilled, 
+  ChatLineSquare, ChatDotRound, Monitor 
+} from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
+import { useLoginApi } from '/@/api/login';
 
 // 定义变量内容
 const router = useRouter();
+const loginApi = useLoginApi();
 const ruleFormRef = ref<FormInstance>();
+
+// 加载状态
+const loading = ref(false);
+
+// 密码显示状态
+const showPassword = ref(false);
 
 /*
  * 定义全局变量，等价Vue2中的data() return。
@@ -18,10 +32,10 @@ const ruleForm = reactive({
 /*
  * 校验规则。
  */
-const registerRules = reactive<FormRules>({
+const loginRules = reactive<FormRules>({
   username: [
-    { required: true, message: '请输入账号', trigger: 'blur' },
-    { min: 3, max: 20, message: '长度在3-20个字符', trigger: 'blur' },
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, max: 20, message: '长度在2-20个字符', trigger: 'blur' },
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -30,69 +44,71 @@ const registerRules = reactive<FormRules>({
 });
 
 // 登录
-const submitForm = (formEl: FormInstance | undefined) => {
+const submitForm = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
-  formEl.validate((valid) => {
+  await formEl.validate(async (valid) => {
     if (valid) {
-      // 模拟登录成功
-      console.log('登录成功', ruleForm);
-      // 登录成功后跳转到首页
-      router.push('/');
+      loading.value = true;
+      try {
+        const res = await loginApi.signIn({
+          username: ruleForm.username,
+          password: ruleForm.password
+        });
+        
+        if (res.code === '0' || res.code === 0) {
+          ElMessage.success('登录成功！');
+          
+          // 存储用户信息
+          if (res.data) {
+            localStorage.setItem('userInfo', JSON.stringify(res.data));
+            localStorage.setItem('token', res.data.id || 'token_' + Date.now());
+          }
+          
+          // 登录成功后跳转到首页
+          setTimeout(() => {
+            router.push('/');
+          }, 500);
+        } else {
+          ElMessage.error(res.msg || '登录失败，请检查用户名和密码');
+        }
+      } catch (err: any) {
+        console.error('登录失败:', err);
+        ElMessage.error(err.message || '登录失败，请稍后重试');
+      } finally {
+        loading.value = false;
+      }
     } else {
       console.log('error submit!');
       return false;
     }
   });
 };
+
+// 重置表单
+const resetForm = (formEl: FormInstance | undefined) => {
+  if (!formEl) return;
+  formEl.resetFields();
+};
 </script>
 
 <template>
   <div class="login-container">
-    <!-- 页首 -->
-    <header class="header">
-      <!-- Logo -->
-      <div class="logo">
-        <a href="#">
-          <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=agriculture%20china%20logo%20green%20color%20simple%20design&image_size=square" alt="农业中国" />
-        </a>
-      </div>
-      
-      <!-- 一级目录 -->
-      <nav class="main-nav">
-        <ul>
-          <li><a href="#">首页</a></li>
-          <li><a href="#">农业新闻</a></li>
-          <li><a href="#">政策法规</a></li>
-          <li><a href="#">市场动态</a></li>
-          <li><a href="#">农业科技</a></li>
-        </ul>
-      </nav>
-      
-      <!-- 搜索栏和天气信息 -->
-      <div class="header-right">
-        <div class="search-box">
-          <input type="text" placeholder="搜索" />
-          <button>搜索</button>
-        </div>
-        <div class="weather-info">
-          <span>北京 晴 20°C</span>
-        </div>
-      </div>
-    </header>
-    
     <!-- 登录内容 -->
     <main class="login-content">
       <div class="login-wrapper">
         <!-- 左侧品牌展示区 -->
         <div class="brand-section">
           <div class="brand-content">
+            
             <h1>智慧农业病虫害检测平台</h1>
             <p class="slogan">利用AI技术实时监测作物健康状况，及时发现病虫害</p>
             
             <div class="features">
               <div class="feature">
                 <div class="feature-icon">
-                  <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=seedling%20icon%20green%20color%20simple%20design&image_size=square" alt="实时作物监测" />
+                  <el-icon :size="28" color="#28a745">
+                    <Food />
+                  </el-icon>
                 </div>
                 <div class="feature-text">
                   <h3>实时作物监测</h3>
@@ -102,7 +118,9 @@ const submitForm = (formEl: FormInstance | undefined) => {
               
               <div class="feature">
                 <div class="feature-icon">
-                  <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chart%20icon%20green%20color%20simple%20design&image_size=square" alt="数据分析报告" />
+                  <el-icon :size="28" color="#28a745">
+                    <DataAnalysis />
+                  </el-icon>
                 </div>
                 <div class="feature-text">
                   <h3>数据分析报告</h3>
@@ -112,7 +130,9 @@ const submitForm = (formEl: FormInstance | undefined) => {
               
               <div class="feature">
                 <div class="feature-icon">
-                  <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=shield%20icon%20green%20color%20simple%20design&image_size=square" alt="智能预警系统" />
+                  <el-icon :size="28" color="#28a745">
+                    <WarningFilled />
+                  </el-icon>
                 </div>
                 <div class="feature-text">
                   <h3>智能预警系统</h3>
@@ -131,47 +151,84 @@ const submitForm = (formEl: FormInstance | undefined) => {
               <p>请输入您的账号和密码</p>
             </div>
             
-            <form class="login-form">
-              <div class="form-group">
-                <label for="username">用户名</label>
-                <div class="input-with-icon">
-                  <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20icon%20gray%20color%20simple%20design&image_size=square" alt="用户" class="input-icon" />
-                  <input type="text" id="username" v-model="ruleForm.username" placeholder="请输入用户名" required />
+            <el-form
+              ref="ruleFormRef"
+              :model="ruleForm"
+              :rules="loginRules"
+              class="login-form"
+              size="large"
+            >
+              <el-form-item prop="username">
+                <div class="form-group">
+                  <label for="username">用户名</label>
+                  <el-input
+                    id="username"
+                    v-model="ruleForm.username"
+                    placeholder="请输入用户名"
+                    clearable
+                    class="full-width-input"
+                  >
+                    <template #prefix>
+                      <el-icon><User /></el-icon>
+                    </template>
+                  </el-input>
                 </div>
-              </div>
+              </el-form-item>
               
-              <div class="form-group">
-                <label for="password">密码</label>
-                <div class="input-with-icon">
-                  <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=lock%20icon%20gray%20color%20simple%20design&image_size=square" alt="密码" class="input-icon" />
-                  <input type="password" id="password" v-model="ruleForm.password" placeholder="请输入密码" required />
+              <el-form-item prop="password">
+                <div class="form-group">
+                  <label for="password">密码</label>
+                  <el-input
+                    id="password"
+                    v-model="ruleForm.password"
+                    :type="showPassword ? 'text' : 'password'"
+                    placeholder="请输入密码"
+                    show-password
+                    @keyup.enter="submitForm(ruleFormRef)"
+                    class="full-width-input"
+                  >
+                    <template #prefix>
+                      <el-icon><Lock /></el-icon>
+                    </template>
+                  </el-input>
                 </div>
-              </div>
+              </el-form-item>
               
               <div class="remember-forgot">
                 <div class="remember">
-                  <input type="checkbox" id="remember" />
+                  <el-checkbox id="remember" />
                   <label for="remember">记住我</label>
                 </div>
                 <a href="#" class="forgot-password">忘记密码?</a>
               </div>
               
-              <button type="button" class="btn-login" @click="submitForm">
-                登录系统
-              </button>
-            </form>
+              <el-button
+                type="primary"
+                class="btn-login"
+                :loading="loading"
+                @click="submitForm(ruleFormRef)"
+              >
+                {{ loading ? '登录中...' : '登录系统' }}
+              </el-button>
+            </el-form>
             
             <div class="social-login">
-              <p>或使用其他方式登录</p>
+              <p></p>
               <div class="social-icons">
                 <a href="#" class="social-icon">
-                  <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=wechat%20icon%20green%20color%20simple%20design&image_size=square" alt="微信" />
+                  <el-icon :size="24" color="#07c160">
+                    <ChatLineSquare />
+                  </el-icon>
                 </a>
                 <a href="#" class="social-icon">
-                  <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=qq%20icon%20blue%20color%20simple%20design&image_size=square" alt="QQ" />
+                  <el-icon :size="24" color="#12b7f5">
+                    <ChatDotRound />
+                  </el-icon>
                 </a>
                 <a href="#" class="social-icon">
-                  <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=microsoft%20icon%20blue%20color%20simple%20design&image_size=square" alt="微软" />
+                  <el-icon :size="24" color="#00a4ef">
+                    <Monitor />
+                  </el-icon>
                 </a>
               </div>
             </div>
@@ -183,12 +240,6 @@ const submitForm = (formEl: FormInstance | undefined) => {
         </div>
       </div>
     </main>
-    
-    <!-- 页脚 -->
-    <footer class="footer">
-      <p>© 2026 农业中国 - 中国网</p>
-      <p>电话：0086-10-88824995 传真：0086-10-88828231</p>
-    </footer>
   </div>
 </template>
 
@@ -198,85 +249,24 @@ const submitForm = (formEl: FormInstance | undefined) => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #fff;
+  background: linear-gradient(135deg, #e8f5e8 0%, #ffffff 100%);
 }
 
-/* 页首样式 */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 40px;
+/* 登录Logo样式 */
+.login-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.logo-icon {
+  width: 80px;
   height: 80px;
-  background-color: #fff;
-  border-bottom: 1px solid #e0e0e0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Logo样式 */
-.logo img {
-  height: 60px;
-}
-
-/* 一级目录样式 */
-.main-nav ul {
-  display: flex;
-  list-style: none;
-}
-
-.main-nav li {
-  margin: 0 15px;
-}
-
-.main-nav a {
-  text-decoration: none;
-  color: #333;
-  font-size: 16px;
-  font-weight: 500;
-  transition: color 0.3s;
-}
-
-.main-nav a:hover {
-  color: #28a745;
-}
-
-/* 页首右侧样式 */
-.header-right {
+  border-radius: 12px;
+  background-color: #e8f5e8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
-  gap: 20px;
-}
-
-/* 搜索栏样式 */
-.search-box {
-  display: flex;
-}
-
-.search-box input {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px 0 0 4px;
-  outline: none;
-}
-
-.search-box button {
-  padding: 8px 16px;
-  background-color: #28a745;
-  color: #fff;
-  border: none;
-  border-radius: 0 4px 4px 0;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.search-box button:hover {
-  background-color: #218838;
-}
-
-/* 天气信息样式 */
-.weather-info {
-  font-size: 14px;
-  color: #666;
+  justify-content: center;
 }
 
 /* 登录内容样式 */
@@ -349,10 +339,7 @@ const submitForm = (formEl: FormInstance | undefined) => {
   flex-shrink: 0;
 }
 
-.feature-icon img {
-  width: 24px;
-  height: 24px;
-}
+
 
 .feature-text h3 {
   font-size: 16px;
@@ -417,6 +404,7 @@ const submitForm = (formEl: FormInstance | undefined) => {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .input-icon {
@@ -425,21 +413,23 @@ const submitForm = (formEl: FormInstance | undefined) => {
   width: 20px;
   height: 20px;
   color: #999;
+  z-index: 10;
 }
 
-.input-with-icon input {
+.input-with-icon :deep(.el-input__wrapper) {
+  padding-left: 40px;
+}
+
+.input-with-icon :deep(.el-input) {
   width: 100%;
-  padding: 12px 12px 12px 40px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.3s;
 }
 
-.input-with-icon input:focus {
-  border-color: #28a745;
-  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+.full-width-input {
+  width: 100%;
+}
+
+.full-width-input :deep(.el-input__wrapper) {
+  width: 100%;
 }
 
 /* 记住我和忘记密码样式 */
@@ -558,10 +548,7 @@ const submitForm = (formEl: FormInstance | undefined) => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.social-icon img {
-  width: 24px;
-  height: 24px;
-}
+
 
 /* 注册链接样式 */
 .register-link {
@@ -582,20 +569,6 @@ const submitForm = (formEl: FormInstance | undefined) => {
   text-decoration: underline;
 }
 
-/* 页脚样式 */
-.footer {
-  background-color: #f8f9fa;
-  padding: 24px;
-  text-align: center;
-  border-top: 1px solid #e0e0e0;
-}
-
-.footer p {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 8px;
-}
-
 /* 响应式设计 */
 @media (max-width: 992px) {
   .login-wrapper {
@@ -613,14 +586,6 @@ const submitForm = (formEl: FormInstance | undefined) => {
     padding: 40px;
     border-left: none;
   }
-  
-  .header {
-    padding: 0 20px;
-  }
-  
-  .main-nav li {
-    margin: 0 10px;
-  }
 }
 
 @media (max-width: 768px) {
@@ -634,22 +599,6 @@ const submitForm = (formEl: FormInstance | undefined) => {
   
   .login-section {
     padding: 30px;
-  }
-  
-  .header {
-    flex-wrap: wrap;
-    height: auto;
-    padding: 16px;
-    gap: 16px;
-  }
-  
-  .main-nav {
-    width: 100%;
-    order: 3;
-  }
-  
-  .main-nav ul {
-    justify-content: center;
   }
 }
 

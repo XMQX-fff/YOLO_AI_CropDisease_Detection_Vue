@@ -20,6 +20,12 @@ import StorageManage from '../views/storageManage/index.vue'
 import SmartChat from '../views/smartChat/index.vue'
 import UserManage from '../views/userManage/index.vue'
 import Personal from '../views/personal/index.vue'
+import InfoGreenhouseCrop from '../views/infoGreenhouse/crop.vue'
+import InfoGreenhouseDevice from '../views/infoGreenhouse/device.vue'
+import InfoGreenhouseAnalysis from '../views/infoGreenhouse/analysis.vue'
+import InfoGreenhouseAlert from '../views/infoGreenhouse/alert.vue'
+import InfoGreenhouseSetting from '../views/infoGreenhouse/setting.vue'
+import InfoGreenhouseHelp from '../views/infoGreenhouse/help.vue'
 
 const routes = [
   {
@@ -84,6 +90,54 @@ const routes = [
     component: InfoGreenhouse,
     meta: {
       title: '智能温室'
+    }
+  },
+  {
+    path: '/infoGreenhouse/crop',
+    name: 'InfoGreenhouseCrop',
+    component: InfoGreenhouseCrop,
+    meta: {
+      title: '作物管理'
+    }
+  },
+  {
+    path: '/infoGreenhouse/device',
+    name: 'InfoGreenhouseDevice',
+    component: InfoGreenhouseDevice,
+    meta: {
+      title: '设备控制'
+    }
+  },
+  {
+    path: '/infoGreenhouse/analysis',
+    name: 'InfoGreenhouseAnalysis',
+    component: InfoGreenhouseAnalysis,
+    meta: {
+      title: '数据分析'
+    }
+  },
+  {
+    path: '/infoGreenhouse/alert',
+    name: 'InfoGreenhouseAlert',
+    component: InfoGreenhouseAlert,
+    meta: {
+      title: '告警管理'
+    }
+  },
+  {
+    path: '/infoGreenhouse/setting',
+    name: 'InfoGreenhouseSetting',
+    component: InfoGreenhouseSetting,
+    meta: {
+      title: '系统设置'
+    }
+  },
+  {
+    path: '/infoGreenhouse/help',
+    name: 'InfoGreenhouseHelp',
+    component: InfoGreenhouseHelp,
+    meta: {
+      title: '帮助文档'
     }
   },
   {
