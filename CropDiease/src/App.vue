@@ -94,21 +94,12 @@ onMounted(() => {
 // 导航菜单数据
 const navMenu = [
   { path: '/', name: '首页' },
-  {
-    path: '/dataView', 
-    name: '数据大屏',
-    children: [
-      { path: '/dataView', name: '总览大屏' },
-      { path: '/dataView/growth', name: '农作物生长监测' },
-      { path: '/dataView/env', name: '环境数据监测' },
-      { path: '/dataView/disease', name: '病虫害统计' },
-      { path: '/dataView/yield', name: '产量预测' }
-    ]
-  },
+  { path: '/dataView', name: '数据大屏' },
   {
     path: '/infoGreenhouse', 
     name: '智能温室',
     children: [
+      { path: '/infoGreenhouse/overview', name: '总览大屏' },
       { path: '/infoGreenhouse', name: '温室管理' },
       { path: '/detailsEnv', name: '环境监测' },
       { path: '/infoGreenhouse/crop', name: '作物管理' },
@@ -117,20 +108,6 @@ const navMenu = [
       { path: '/infoGreenhouse/alert', name: '告警管理' },
       { path: '/infoGreenhouse/setting', name: '系统设置' },
       { path: '/infoGreenhouse/help', name: '帮助文档' }
-    ]
-  },
-  {
-    path: '/detailsEnv', 
-    name: '环境检测',
-    children: [
-      { path: '/detailsEnv', name: '环境概览' },
-      { path: '/detailsEnv', name: '实时数据' },
-      { path: '/detailsEnv', name: '历史记录' },
-      { path: '/detailsEnv', name: '设备管理' },
-      { path: '/detailsEnv', name: '告警设置' },
-      { path: '/detailsEnv', name: '数据分析' },
-      { path: '/detailsEnv', name: '报表导出' },
-      { path: '/detailsEnv', name: '系统设置' }
     ]
   },
   { 

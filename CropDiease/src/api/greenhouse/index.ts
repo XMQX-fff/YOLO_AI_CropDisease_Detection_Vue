@@ -64,6 +64,13 @@ export function useGreenhouseApi() {
                 method: 'get',
                 params
             });
+        },
+        getEnvironmentHistory: (params: { greenhouseId: number; timeRange: string }) => {
+            return request({
+                url: '/api/greenhouse-environment-history/chart',
+                method: 'get',
+                params
+            });
         }
     };
 }

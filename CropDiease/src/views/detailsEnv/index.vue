@@ -1,6 +1,49 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { useGreenhouseApi } from '/@/api/greenhouse'
+
+const greenhouseApi = useGreenhouseApi()
+
+// 温室ID和时间范围
+const currentGreenhouseId = ref(1)
+const currentTimeRange = ref('8h')
+
+// 温室列表
+const greenhouseList = ref<{ id: number; name: string }[]>([])
+
+// 获取温室列表
+const fetchGreenhouseList = async () => {
+  try {
+    const response = await greenhouseApi.getGreenhouseList({})
+    if (response.code === '200' || response.code === 200 || response.code === '0' || response.code === 0) {
+      const data = response.data.records || response.data.list || response.data
+      greenhouseList.value = data.map((item: any) => ({
+        id: item.id,
+        name: item.greenhouseName || `${item.id}号温室`
+      }))
+      
+      // 设置默认选中的温室
+      if (greenhouseList.value.length > 0) {
+        currentGreenhouseId.value = greenhouseList.value[0].id
+        // 获取该温室的历史数据
+        fetchEnvironmentHistory()
+      }
+    }
+  } catch (error) {
+    console.error('获取温室列表失败:', error)
+    // 使用模拟数据
+    greenhouseList.value = [
+      { id: 1, name: '1号温室' },
+      { id: 2, name: '2号温室' },
+      { id: 3, name: '3号温室' },
+      { id: 4, name: '4号温室' },
+      { id: 5, name: '5号温室' }
+    ]
+    // 获取第一个温室的历史数据
+    fetchEnvironmentHistory()
+  }
+}
 
 // 环境数据
 const envData = ref({
@@ -67,27 +110,112 @@ const historyData = ref([
   { time: '16:00', temperature: 25.5, humidity: 65, light: 8500, soilMoisture: 45 }
 ])
 
-// 设备状态
-const devices = ref([
-  { id: 1, name: '温度传感器', status: '正常', lastOnline: '2026-02-20 15:30', location: '1号温室' },
-  { id: 2, name: '湿度传感器', status: '正常', lastOnline: '2026-02-20 15:30', location: '1号温室' },
-  { id: 3, name: '光照传感器', status: '正常', lastOnline: '2026-02-20 15:30', location: '1号温室' },
-  { id: 4, name: '土壤湿度传感器', status: '正常', lastOnline: '2026-02-20 15:30', location: '1号温室' },
-  { id: 5, name: 'CO2传感器', status: '正常', lastOnline: '2026-02-20 15:30', location: '1号温室' },
-  { id: 6, name: '土壤pH传感器', status: '需要校准', lastOnline: '2026-02-20 15:25', location: '1号温室' }
-])
-
 // 图表引用
 const temperatureChartRef = ref<HTMLElement>()
 const humidityChartRef = ref<HTMLElement>()
 const lightChartRef = ref<HTMLElement>()
 const soilMoistureChartRef = ref<HTMLElement>()
+const co2ChartRef = ref<HTMLElement>()
+const soilPhChartRef = ref<HTMLElement>()
 
 // 图表实例
 let temperatureChart: echarts.ECharts | null = null
 let humidityChart: echarts.ECharts | null = null
 let lightChart: echarts.ECharts | null = null
 let soilMoistureChart: echarts.ECharts | null = null
+let co2Chart: echarts.ECharts | null = null
+let soilPhChart: echarts.ECharts | null = null
+
+// 获取环境历史数据
+const fetchEnvironmentHistory = async () => {
+  try {
+    const response = await greenhouseApi.getEnvironmentHistory({
+      greenhouseId: currentGreenhouseId.value,
+      timeRange: currentTimeRange.value
+    })
+    
+    if (response.code === '200' || response.code === 200 || response.code === '0' || response.code === 0) {
+      const data = response.data
+      
+      // 更新图表数据
+      updateCharts(data)
+    }
+  } catch (error) {
+    console.error('获取环境历史数据失败:', error)
+    // 使用模拟数据
+    const mockData = generateEnvData()
+    updateCharts(mockData)
+  }
+}
+
+// 更新图表
+const updateCharts = (data: any) => {
+  // 后端返回的是数组格式
+  const records = Array.isArray(data) ? data : []
+  
+  // 提取时间、温度、湿度、光照、土壤湿度
+  const hours = records.map((item: any) => {
+    // 从 recordTime 提取时间，格式为 "2026-03-01 08:00:00"
+    const timeStr = item.recordTime || ''
+    const match = timeStr.match(/(\d{2}:\d{2})/)
+    return match ? match[1] : timeStr
+  })
+  
+  const temperatures = records.map((item: any) => item.temperature || 0)
+  const humidities = records.map((item: any) => item.airHumidity || 0)
+  const lights = records.map((item: any) => item.lightIntensity || 0)
+  const soilMoistures = records.map((item: any) => item.soilHumidity || 0)
+  const co2Concentrations = records.map((item: any) => item.co2Concentration || 0)
+  const soilPhValues = records.map((item: any) => item.soilPh || 0)
+  
+  // 更新温度图表
+  if (temperatureChart) {
+    temperatureChart.setOption({
+      xAxis: { data: hours },
+      series: [{ data: temperatures }]
+    })
+  }
+  
+  // 更新湿度图表
+  if (humidityChart) {
+    humidityChart.setOption({
+      xAxis: { data: hours },
+      series: [{ data: humidities }]
+    })
+  }
+  
+  // 更新光照图表
+  if (lightChart) {
+    lightChart.setOption({
+      xAxis: { data: hours },
+      series: [{ data: lights }]
+    })
+  }
+  
+  // 更新土壤湿度图表
+  if (soilMoistureChart) {
+    soilMoistureChart.setOption({
+      xAxis: { data: hours },
+      series: [{ data: soilMoistures }]
+    })
+  }
+  
+  // 更新CO2浓度图表
+  if (co2Chart) {
+    co2Chart.setOption({
+      xAxis: { data: hours },
+      series: [{ data: co2Concentrations }]
+    })
+  }
+  
+  // 更新土壤pH值图表
+  if (soilPhChart) {
+    soilPhChart.setOption({
+      xAxis: { data: hours },
+      series: [{ data: soilPhValues }]
+    })
+  }
+}
 
 // 生成环境监测历史数据
 const generateEnvData = () => {
@@ -96,6 +224,8 @@ const generateEnvData = () => {
   const humidities = []
   const lights = []
   const soilMoistures = []
+  const co2Concentrations = []
+  const soilPhValues = []
   
   for (let i = 23; i >= 0; i--) {
     const hour = new Date()
@@ -107,9 +237,11 @@ const generateEnvData = () => {
     humidities.push(50 + Math.random() * 30)
     lights.push(5000 + Math.random() * 5000)
     soilMoistures.push(35 + Math.random() * 20)
+    co2Concentrations.push(350 + Math.random() * 200)
+    soilPhValues.push(6.0 + Math.random() * 1.0)
   }
   
-  return { hours, temperatures, humidities, lights, soilMoistures }
+  return { hours, temperatures, humidities, lights, soilMoistures, co2Concentrations, soilPhValues }
 }
 
 // 初始化图表
@@ -197,6 +329,60 @@ const initCharts = async () => {
       }]
     })
   }
+  
+  // CO2浓度图表
+  if (co2ChartRef.value) {
+    co2Chart = echarts.init(co2ChartRef.value)
+    co2Chart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      yAxis: { type: 'value', name: 'CO2浓度(ppm)' },
+      series: [{
+        name: 'CO2浓度',
+        type: 'line',
+        smooth: true,
+        data: envChartData.co2Concentrations || Array(24).fill(400).map(() => 350 + Math.random() * 200),
+        areaStyle: { color: 'rgba(111, 66, 193, 0.1)' },
+        lineStyle: { color: '#6f42c1' },
+        itemStyle: { color: '#6f42c1' }
+      }]
+    })
+  }
+  
+  // 土壤pH值图表
+  if (soilPhChartRef.value) {
+    soilPhChart = echarts.init(soilPhChartRef.value)
+    soilPhChart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      yAxis: { type: 'value', name: '土壤pH值' },
+      series: [{
+        name: '土壤pH值',
+        type: 'line',
+        smooth: true,
+        data: envChartData.soilPhValues || Array(24).fill(6.5).map(() => 6.0 + Math.random() * 1.0),
+        areaStyle: { color: 'rgba(220, 53, 69, 0.1)' },
+        lineStyle: { color: '#dc3545' },
+        itemStyle: { color: '#dc3545' }
+      }]
+    })
+  }
+}
+
+// 处理时间范围变化
+const handleTimeRangeChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement
+  currentTimeRange.value = target.value
+  fetchEnvironmentHistory()
+}
+
+// 处理温室变化
+const handleGreenhouseChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement
+  currentGreenhouseId.value = Number(target.value)
+  fetchEnvironmentHistory()
 }
 
 // 天气信息
@@ -214,14 +400,12 @@ const weatherInfo = ref({
 // 获取天气数据
 const fetchWeatherData = async () => {
   try {
-    // 固定使用广州的天气
     const city = '广州'
     const url = `https://uapis.cn/api/v1/misc/weather?city=${encodeURIComponent(city)}`
     
     const response = await fetch(url)
     const data = await response.json()
     
-    // 解析UAPI返回的数据结构
     const weatherData = data
     const temperature = weatherData.temperature
     const weatherDesc = weatherData.weather
@@ -230,7 +414,6 @@ const fetchWeatherData = async () => {
     const humidity = weatherData.humidity
     const reportTime = weatherData.report_time
     
-    // 获取当前日期和星期
     const now = new Date()
     const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit' }
     const weekdayOptions = { weekday: 'long' }
@@ -249,7 +432,6 @@ const fetchWeatherData = async () => {
     }
   } catch (err) {
     console.error('获取天气数据失败:', err)
-    // 模拟数据
     weatherInfo.value = {
       date: '2026-02-20',
       weekday: '星期五',
@@ -264,8 +446,9 @@ const fetchWeatherData = async () => {
 }
 
 onMounted(() => {
-  fetchWeatherData() // 获取天气数据
-  initCharts() // 初始化图表
+  fetchWeatherData()
+  fetchGreenhouseList()
+  initCharts()
 })
 
 // 窗口大小变化时调整图表
@@ -274,6 +457,8 @@ window.addEventListener('resize', () => {
   humidityChart?.resize()
   lightChart?.resize()
   soilMoistureChart?.resize()
+  co2Chart?.resize()
+  soilPhChart?.resize()
 })
 
 
@@ -467,12 +652,14 @@ window.addEventListener('resize', () => {
             <div class="card-header">
               <h3>历史数据趋势</h3>
               <div class="card-actions">
-                <select class="time-range">
-                  <option value="1h">1小时</option>
-                  <option value="4h">4小时</option>
-                  <option value="8h" selected>8小时</option>
-                  <option value="24h">24小时</option>
-                  <option value="7d">7天</option>
+                <select class="greenhouse-select" v-model="currentGreenhouseId" @change="handleGreenhouseChange">
+                  <option v-for="gh in greenhouseList" :key="gh.id" :value="gh.id">{{ gh.name }}</option>
+                </select>
+                <select class="time-range" v-model="currentTimeRange" @change="handleTimeRangeChange">
+                  <option value="8h">8小时</option>
+                  <option value="1d">1天</option>
+                  <option value="1w">1周</option>
+                  <option value="1m">1个月</option>
                 </select>
               </div>
             </div>
@@ -501,46 +688,18 @@ window.addEventListener('resize', () => {
                   <h4>土壤湿度变化趋势</h4>
                   <div ref="soilMoistureChartRef" class="chart-container"></div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 设备状态 -->
-        <div class="devices-section">
-          <div class="card">
-            <div class="card-header">
-              <h3>设备状态</h3>
-            </div>
-            <div class="card-body">
-              <div class="devices-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>设备ID</th>
-                      <th>设备名称</th>
-                      <th>状态</th>
-                      <th>最后在线时间</th>
-                      <th>位置</th>
-                      <th>操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="device in devices" :key="device.id">
-                      <td>{{ device.id }}</td>
-                      <td>{{ device.name }}</td>
-                      <td>
-                        <span class="device-status" :class="device.status === '正常' ? 'normal' : 'warning'">{{ device.status }}</span>
-                      </td>
-                      <td>{{ device.lastOnline }}</td>
-                      <td>{{ device.location }}</td>
-                      <td>
-                        <button class="btn-detail">查看详情</button>
-                        <button class="btn-test">测试</button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                
+                <!-- CO2浓度图表 -->
+                <div class="chart-item">
+                  <h4>CO2浓度变化趋势</h4>
+                  <div ref="co2ChartRef" class="chart-container"></div>
+                </div>
+                
+                <!-- 土壤pH值图表 -->
+                <div class="chart-item">
+                  <h4>土壤pH值变化趋势</h4>
+                  <div ref="soilPhChartRef" class="chart-container"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -639,6 +798,16 @@ window.addEventListener('resize', () => {
 .btn-settings:hover {
   background-color: #e0a800;
   transform: translateY(-2px);
+}
+
+.greenhouse-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  min-width: 120px;
 }
 
 .time-range {
@@ -784,7 +953,7 @@ window.addEventListener('resize', () => {
 /* 历史数据图表样式 */
 .charts-container {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
 
@@ -807,83 +976,6 @@ window.addEventListener('resize', () => {
   height: 200px;
   border-radius: 4px;
 }
-
-/* 设备状态样式 */
-.devices-table {
-  overflow-x: auto;
-}
-
-.devices-table table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.devices-table th, .devices-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.devices-table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
-}
-
-.devices-table td {
-  font-size: 14px;
-  color: #666;
-}
-
-.device-status {
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-weight: 500;
-}
-
-.device-status.normal {
-  background-color: #e8f5e8;
-  color: #28a745;
-}
-
-.device-status.warning {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.btn-detail, .btn-test {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  margin-right: 8px;
-  transition: all 0.3s;
-}
-
-.btn-detail {
-  background-color: #007bff;
-  color: #fff;
-}
-
-.btn-detail:hover {
-  background-color: #0069d9;
-  transform: translateY(-1px);
-}
-
-.btn-test {
-  background-color: #6c757d;
-  color: #fff;
-}
-
-.btn-test:hover {
-  background-color: #5a6268;
-  transform: translateY(-1px);
-}
-
-
 
 /* 响应式设计 */
 @media (max-width: 1200px) {

@@ -2,10 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/login/index.vue'
 import HomePage from '../views/homePage/index.vue'
 import DataView from '../views/dataView/index.vue'
-import DataViewGrowth from '../views/dataView/growth.vue'
-import DataViewEnv from '../views/dataView/env.vue'
-import DataViewDisease from '../views/dataView/disease.vue'
-import DataViewYield from '../views/dataView/yield.vue'
 import InfoGreenhouse from '../views/infoGreenhouse/index.vue'
 import DetailsEnv from '../views/detailsEnv/index.vue'
 import InfoDisease from '../views/infoDisease/index.vue'
@@ -26,6 +22,7 @@ import InfoGreenhouseAnalysis from '../views/infoGreenhouse/analysis.vue'
 import InfoGreenhouseAlert from '../views/infoGreenhouse/alert.vue'
 import InfoGreenhouseSetting from '../views/infoGreenhouse/setting.vue'
 import InfoGreenhouseHelp from '../views/infoGreenhouse/help.vue'
+import InfoGreenhouseOverview from '../views/infoGreenhouse/overview.vue'
 
 const routes = [
   {
@@ -49,39 +46,7 @@ const routes = [
     name: 'DataView',
     component: DataView,
     meta: {
-      title: '总览大屏'
-    }
-  },
-  {
-    path: '/dataView/growth',
-    name: 'DataViewGrowth',
-    component: DataViewGrowth,
-    meta: {
-      title: '农作物生长监测'
-    }
-  },
-  {
-    path: '/dataView/env',
-    name: 'DataViewEnv',
-    component: DataViewEnv,
-    meta: {
-      title: '环境数据监测'
-    }
-  },
-  {
-    path: '/dataView/disease',
-    name: 'DataViewDisease',
-    component: DataViewDisease,
-    meta: {
-      title: '病虫害统计'
-    }
-  },
-  {
-    path: '/dataView/yield',
-    name: 'DataViewYield',
-    component: DataViewYield,
-    meta: {
-      title: '产量预测'
+      title: '数据大屏'
     }
   },
   {
@@ -90,6 +55,14 @@ const routes = [
     component: InfoGreenhouse,
     meta: {
       title: '智能温室'
+    }
+  },
+  {
+    path: '/infoGreenhouse/overview',
+    name: 'InfoGreenhouseOverview',
+    component: InfoGreenhouseOverview,
+    meta: {
+      title: '总览大屏'
     }
   },
   {
