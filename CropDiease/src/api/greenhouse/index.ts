@@ -71,6 +71,65 @@ export function useGreenhouseApi() {
                 method: 'get',
                 params
             });
+        },
+        getDeviceList: (params: object) => {
+            return request({
+                url: '/api/greenhouse-device',
+                method: 'get',
+                params
+            });
+        },
+        getAllDevices: () => {
+            return request({
+                url: '/api/greenhouse-device/all',
+                method: 'get'
+            });
+        },
+        getDeviceById: (id: string) => {
+            return request({
+                url: `/api/greenhouse-device/${id}`,
+                method: 'get'
+            });
+        },
+        getDevicesByGreenhouseId: (greenhouseId: string) => {
+            return request({
+                url: `/api/greenhouse-device/greenhouse/${greenhouseId}`,
+                method: 'get'
+            });
+        },
+        addDevice: (data: object) => {
+            return request({
+                url: '/api/greenhouse-device',
+                method: 'post',
+                data
+            });
+        },
+        updateDevice: (data: object) => {
+            return request({
+                url: '/api/greenhouse-device/update',
+                method: 'post',
+                data
+            });
+        },
+        deleteDevice: (id: string) => {
+            return request({
+                url: `/api/greenhouse-device/${id}`,
+                method: 'delete'
+            });
+        },
+        controlDevice: (id: string, params: { status: number; value?: string; operateUser?: string }) => {
+            return request({
+                url: `/api/greenhouse-device/control/${id}`,
+                method: 'post',
+                params
+            });
+        },
+        toggleAutoMode: (id: string, params: { isAuto: number }) => {
+            return request({
+                url: `/api/greenhouse-device/toggle-auto/${id}`,
+                method: 'post',
+                params
+            });
         }
     };
 }
