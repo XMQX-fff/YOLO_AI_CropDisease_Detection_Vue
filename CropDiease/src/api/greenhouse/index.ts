@@ -10,6 +10,7 @@ import request from '/@/utils/request';
  * @method deleteGreenhouse 删除温室
  * @method getAllWithDiseaseCount 获取所有温室信息（带病虫害数量）
  * @method getWithDiseaseCountPage 分页获取温室信息（带病虫害数量）
+ * @method getAllGreenhouseStatus 获取所有温室状态信息
  */
 export function useGreenhouseApi() {
     return {
@@ -50,12 +51,6 @@ export function useGreenhouseApi() {
             return request({
                 url: `/api/greenhouse/${id}`,
                 method: 'delete'
-            });
-        },
-        getAllWithDiseaseCount: () => {
-            return request({
-                url: '/api/greenhouse/all/withDiseaseCount',
-                method: 'get'
             });
         },
         getWithDiseaseCountPage: (params: object) => {
@@ -128,6 +123,19 @@ export function useGreenhouseApi() {
             return request({
                 url: `/api/greenhouse-device/toggle-auto/${id}`,
                 method: 'post',
+                params
+            });
+        },
+        getAllGreenhouseStatus: () => {
+            return request({
+                url: '/api/greenhouse/status/all',
+                method: 'get'
+            });
+        },
+        getAbnormalStats: (params?: { startTime?: string; endTime?: string }) => {
+            return request({
+                url: '/api/greenhouse-environment-history/abnormal-stats',
+                method: 'get',
                 params
             });
         }
