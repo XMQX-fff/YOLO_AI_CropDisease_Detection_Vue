@@ -153,10 +153,21 @@ const updateCharts = (data: any) => {
   // 后端返回的是数组格式
   const records = Array.isArray(data) ? data : []
   
-  // 提取时间、温度、湿度、光照、土壤湿度
-  const hours = records.map((item: any) => {
-    // 从 recordTime 提取时间，格式为 "2026-03-01 08:00:00"
+  // 根据时间范围决定X轴显示格式
+  const xAxisData = records.map((item: any) => {
     const timeStr = item.recordTime || ''
+    
+    // 如果是1周或1个月，显示日期（如 "03-01"）
+    if (currentTimeRange.value === '1w' || currentTimeRange.value === '1m') {
+      const match = timeStr.match(/(\d{4}-\d{2}-\d{2})/)
+      if (match) {
+        const date = match[1]
+        return date.substring(5)  // 只显示 "03-01" 格式
+      }
+      return timeStr
+    }
+    
+    // 如果是8小时或1天，显示时间（如 "08:00"）
     const match = timeStr.match(/(\d{2}:\d{2})/)
     return match ? match[1] : timeStr
   })
@@ -171,7 +182,7 @@ const updateCharts = (data: any) => {
   // 更新温度图表
   if (temperatureChart) {
     temperatureChart.setOption({
-      xAxis: { data: hours },
+      xAxis: { data: xAxisData },
       series: [{ data: temperatures }]
     })
   }
@@ -179,7 +190,7 @@ const updateCharts = (data: any) => {
   // 更新湿度图表
   if (humidityChart) {
     humidityChart.setOption({
-      xAxis: { data: hours },
+      xAxis: { data: xAxisData },
       series: [{ data: humidities }]
     })
   }
@@ -187,7 +198,7 @@ const updateCharts = (data: any) => {
   // 更新光照图表
   if (lightChart) {
     lightChart.setOption({
-      xAxis: { data: hours },
+      xAxis: { data: xAxisData },
       series: [{ data: lights }]
     })
   }
@@ -195,7 +206,7 @@ const updateCharts = (data: any) => {
   // 更新土壤湿度图表
   if (soilMoistureChart) {
     soilMoistureChart.setOption({
-      xAxis: { data: hours },
+      xAxis: { data: xAxisData },
       series: [{ data: soilMoistures }]
     })
   }
@@ -203,7 +214,7 @@ const updateCharts = (data: any) => {
   // 更新CO2浓度图表
   if (co2Chart) {
     co2Chart.setOption({
-      xAxis: { data: hours },
+      xAxis: { data: xAxisData },
       series: [{ data: co2Concentrations }]
     })
   }
@@ -211,7 +222,7 @@ const updateCharts = (data: any) => {
   // 更新土壤pH值图表
   if (soilPhChart) {
     soilPhChart.setOption({
-      xAxis: { data: hours },
+      xAxis: { data: xAxisData },
       series: [{ data: soilPhValues }]
     })
   }
@@ -219,7 +230,7 @@ const updateCharts = (data: any) => {
 
 // 生成环境监测历史数据
 const generateEnvData = () => {
-  const hours = []
+  const xAxisData = []
   const temperatures = []
   const humidities = []
   const lights = []
@@ -227,10 +238,40 @@ const generateEnvData = () => {
   const co2Concentrations = []
   const soilPhValues = []
   
-  for (let i = 23; i >= 0; i--) {
-    const hour = new Date()
-    hour.setHours(hour.getHours() - i)
-    hours.push(`${hour.getHours().toString().padStart(2, '0')}:00`)
+  // 根据时间范围决定数据点数量和格式
+  let dataPoints = 24
+  let isDateMode = false
+  
+  if (currentTimeRange.value === '8h') {
+    dataPoints = 8
+    isDateMode = false
+  } else if (currentTimeRange.value === '1d') {
+    dataPoints = 24
+    isDateMode = false
+  } else if (currentTimeRange.value === '1w') {
+    dataPoints = 7
+    isDateMode = true
+  } else if (currentTimeRange.value === '1m') {
+    dataPoints = 30
+    isDateMode = true
+  }
+  
+  for (let i = dataPoints - 1; i >= 0; i--) {
+    const now = new Date()
+    
+    if (isDateMode) {
+      // 日期模式：生成日期（如 "03-01"）
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      xAxisData.push(`${month}-${day}`)
+    } else {
+      // 时间模式：生成时间（如 "08:00"）
+      const hour = new Date()
+      hour.setHours(hour.getHours() - i)
+      xAxisData.push(`${hour.getHours().toString().padStart(2, '0')}:00`)
+    }
     
     // 基于当前环境数据生成合理的波动
     temperatures.push(20 + Math.random() * 10)
@@ -241,7 +282,7 @@ const generateEnvData = () => {
     soilPhValues.push(6.0 + Math.random() * 1.0)
   }
   
-  return { hours, temperatures, humidities, lights, soilMoistures, co2Concentrations, soilPhValues }
+  return { xAxisData, temperatures, humidities, lights, soilMoistures, co2Concentrations, soilPhValues }
 }
 
 // 初始化图表
@@ -256,7 +297,7 @@ const initCharts = async () => {
     temperatureChart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.xAxisData },
       yAxis: { type: 'value', name: '温度(°C)' },
       series: [{
         name: '温度',
@@ -276,7 +317,7 @@ const initCharts = async () => {
     humidityChart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.xAxisData },
       yAxis: { type: 'value', name: '湿度(%)' },
       series: [{
         name: '湿度',
@@ -296,7 +337,7 @@ const initCharts = async () => {
     lightChart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.xAxisData },
       yAxis: { type: 'value', name: '光照(lux)' },
       series: [{
         name: '光照',
@@ -316,7 +357,7 @@ const initCharts = async () => {
     soilMoistureChart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.xAxisData },
       yAxis: { type: 'value', name: '土壤湿度(%)' },
       series: [{
         name: '土壤湿度',
@@ -336,7 +377,7 @@ const initCharts = async () => {
     co2Chart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.xAxisData },
       yAxis: { type: 'value', name: 'CO2浓度(ppm)' },
       series: [{
         name: 'CO2浓度',
@@ -356,7 +397,7 @@ const initCharts = async () => {
     soilPhChart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', boundaryGap: false, data: envChartData.hours },
+      xAxis: { type: 'category', boundaryGap: false, data: envChartData.xAxisData },
       yAxis: { type: 'value', name: '土壤pH值' },
       series: [{
         name: '土壤pH值',
@@ -375,6 +416,11 @@ const initCharts = async () => {
 const handleTimeRangeChange = (event: Event) => {
   const target = event.target as HTMLSelectElement
   currentTimeRange.value = target.value
+  
+  // 重新初始化图表以更新X轴格式
+  initCharts()
+  
+  // 获取环境历史数据
   fetchEnvironmentHistory()
 }
 

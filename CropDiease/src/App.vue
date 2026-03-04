@@ -102,11 +102,9 @@ const navMenu = [
       { path: '/infoGreenhouse/overview', name: '总览大屏' },
       { path: '/infoGreenhouse', name: '温室管理' },
       { path: '/detailsEnv', name: '环境监测' },
-      { path: '/infoGreenhouse/crop', name: '作物管理' },
       { path: '/infoGreenhouse/device', name: '设备控制' },
       { path: '/infoGreenhouse/analysis', name: '数据分析' },
       { path: '/infoGreenhouse/alert', name: '告警管理' },
-      { path: '/infoGreenhouse/setting', name: '系统设置' },
       { path: '/infoGreenhouse/help', name: '帮助文档' }
     ]
   },
@@ -123,7 +121,14 @@ const navMenu = [
       { path: '/cameraRecord', name: '摄像头预测记录' }
     ]
   },
-  { path: '/purchaseManage', name: '农资采购' },
+  { 
+    path: '/purchaseManage', 
+    name: '农资采购',
+    children: [
+      { path: '/purchaseManage', name: '农资采购' },
+      { path: '/purchaseManage/supply', name: '供应管理' }
+    ]
+  },
   { path: '/storageManage', name: '库存管理' },
   { path: '/smartChat', name: '智能助手' },
   { path: '/userManage', name: '用户管理' },

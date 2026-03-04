@@ -2,6 +2,11 @@ import request from '/@/utils/request';
 
 /**
  * 采购管理API接口集合
+ * @method getPurchaseList 获取采购列表
+ * @method getPurchaseDetail 获取采购详情
+ * @method addPurchase 添加采购
+ * @method updatePurchase 更新采购
+ * @method deletePurchase 删除采购
  * @method getProductList 获取产品列表
  * @method getProductDetail 获取产品详情
  * @method addProduct 添加产品
@@ -35,6 +40,41 @@ import request from '/@/utils/request';
  */
 export function usePurchaseApi() {
     return {
+        // 采购管理相关接口
+        getPurchaseList: (params: object) => {
+            return request({
+                url: '/api/purchase',
+                method: 'get',
+                params
+            });
+        },
+        getPurchaseDetail: (id: string | number) => {
+            return request({
+                url: `/api/purchase/${id}`,
+                method: 'get'
+            });
+        },
+        addPurchase: (data: object) => {
+            return request({
+                url: '/api/purchase',
+                method: 'post',
+                data
+            });
+        },
+        updatePurchase: (data: object) => {
+            return request({
+                url: '/api/purchase',
+                method: 'put',
+                data
+            });
+        },
+        deletePurchase: (id: string | number) => {
+            return request({
+                url: `/api/purchase/${id}`,
+                method: 'delete'
+            });
+        },
+        
         // 产品相关接口
         getProductList: (params: object) => {
             return request({
@@ -102,6 +142,13 @@ export function usePurchaseApi() {
             return request({
                 url: `/api/order/${id}`,
                 method: 'delete'
+            });
+        },
+        updateOrderStatus: (orderId: string | number, status: string) => {
+            return request({
+                url: `/api/order/${orderId}/status`,
+                method: 'put',
+                data: { status }
             });
         },
         

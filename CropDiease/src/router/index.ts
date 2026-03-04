@@ -12,15 +12,14 @@ import ImgRecord from '../views/imgRecord/index.vue'
 import VideoRecord from '../views/videoRecord/index.vue'
 import CameraRecord from '../views/cameraRecord/index.vue'
 import PurchaseManage from '../views/purchaseManage/index.vue'
+import PurchaseSupply from '../views/purchaseManage/supply.vue'
 import StorageManage from '../views/storageManage/index.vue'
 import SmartChat from '../views/smartChat/index.vue'
 import UserManage from '../views/userManage/index.vue'
 import Personal from '../views/personal/index.vue'
-import InfoGreenhouseCrop from '../views/infoGreenhouse/crop.vue'
 import InfoGreenhouseDevice from '../views/infoGreenhouse/device.vue'
 import InfoGreenhouseAnalysis from '../views/infoGreenhouse/analysis.vue'
 import InfoGreenhouseAlert from '../views/infoGreenhouse/alert.vue'
-import InfoGreenhouseSetting from '../views/infoGreenhouse/setting.vue'
 import InfoGreenhouseHelp from '../views/infoGreenhouse/help.vue'
 import InfoGreenhouseOverview from '../views/infoGreenhouse/overview.vue'
 
@@ -66,14 +65,6 @@ const routes = [
     }
   },
   {
-    path: '/infoGreenhouse/crop',
-    name: 'InfoGreenhouseCrop',
-    component: InfoGreenhouseCrop,
-    meta: {
-      title: '作物管理'
-    }
-  },
-  {
     path: '/infoGreenhouse/device',
     name: 'InfoGreenhouseDevice',
     component: InfoGreenhouseDevice,
@@ -95,14 +86,6 @@ const routes = [
     component: InfoGreenhouseAlert,
     meta: {
       title: '告警管理'
-    }
-  },
-  {
-    path: '/infoGreenhouse/setting',
-    name: 'InfoGreenhouseSetting',
-    component: InfoGreenhouseSetting,
-    meta: {
-      title: '系统设置'
     }
   },
   {
@@ -183,6 +166,14 @@ const routes = [
     component: PurchaseManage,
     meta: {
       title: '农资采购'
+    }
+  },
+  {
+    path: '/purchaseManage/supply',
+    name: 'PurchaseSupply',
+    component: PurchaseSupply,
+    meta: {
+      title: '供应管理'
     }
   },
   {
