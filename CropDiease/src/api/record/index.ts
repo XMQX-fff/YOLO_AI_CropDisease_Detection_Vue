@@ -81,6 +81,21 @@ export function useRecordApi() {
                 url: `/api/videoRecords/${id}`,
                 method: 'delete'
             });
+        },
+        // 获取所有温室检测记录（用于病虫害类型分布统计）
+        getAllGreenhouseDetections: () => {
+            return request({
+                url: '/api/greenhouseDetection/all',
+                method: 'get'
+            });
+        },
+        // 获取病虫害识别汇总列表
+        getPestDetectionList: (params: object) => {
+            return request({
+                url: '/api/pest-detection/list',
+                method: 'get',
+                params
+            });
         }
     };
 }

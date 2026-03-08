@@ -7,6 +7,279 @@ declare module '@wangeditor/editor-for-vue';
 declare module 'js-table2excel';
 declare module 'qs';
 
+// 高德地图类型声明
+declare namespace AMap {
+	class Map {
+		constructor(container: string | HTMLElement, options?: MapOptions);
+		destroy(): void;
+		setFitView(view?: Marker[] | Polyline[] | Polygon[] | Circle[] | any[], immediately?: boolean): void;
+		setZoomAndCenter(zoom: number, center: [number, number], animation?: boolean): void;
+		setZoom(zoom: number): void;
+		setCenter(center: [number, number]): void;
+		getZoom(): number;
+		getCenter(): LngLat;
+		getBounds(): Bounds;
+		setBounds(bounds: Bounds, immediately?: boolean): void;
+		addControl(control: any): void;
+		removeControl(control: any): void;
+		on(eventName: string, handler: Function): void;
+		off(eventName: string, handler?: Function): void;
+	}
+
+	interface MapOptions {
+		zoom?: number;
+		center?: [number, number];
+		mapStyle?: string;
+		viewMode?: '2D' | '3D';
+		pitch?: number;
+		rotation?: number;
+		showLabel?: boolean;
+		showBuildingBlock?: boolean;
+		features?: string[];
+		[key: string]: any;
+	}
+
+	class LngLat {
+		constructor(lng: number, lat: number);
+		getLng(): number;
+		getLat(): number;
+		toArray(): [number, number];
+	}
+
+	class Bounds {
+		constructor(southWest: LngLat, northEast: LngLat);
+		contains(point: LngLat): boolean;
+		getCenter(): LngLat;
+	}
+
+	class Marker {
+		constructor(options?: MarkerOptions);
+		setMap(map: Map | null): void;
+		setPosition(position: [number, number] | LngLat): void;
+		getPosition(): LngLat;
+		setContent(content: string | HTMLElement): void;
+		setLabel(options: any): void;
+		on(eventName: string, handler: Function): void;
+		off(eventName: string, handler?: Function): void;
+	}
+
+	interface MarkerOptions {
+		position?: [number, number] | LngLat;
+		offset?: Pixel;
+		icon?: Icon | string;
+		content?: string | HTMLElement;
+		title?: string;
+		zIndex?: number;
+		angle?: number;
+		draggable?: boolean;
+		raiseOnDrag?: boolean;
+		cursor?: string;
+		visible?: boolean;
+		clickable?: boolean;
+		shape?: any;
+		animation?: string;
+		[key: string]: any;
+	}
+
+	class Pixel {
+		constructor(x: number, y: number);
+		getX(): number;
+		getY(): number;
+	}
+
+	class Icon {
+		constructor(options: IconOptions);
+		setImageSize(size: Size): void;
+		setImageOffset(offset: Pixel): void;
+	}
+
+	interface IconOptions {
+		size?: Size;
+		image?: string;
+		imageOffset?: Pixel;
+		imageSize?: Size;
+	}
+
+	class Size {
+		constructor(width: number, height: number);
+		getWidth(): number;
+		getHeight(): number;
+	}
+
+	class DistrictSearch {
+		constructor(options?: any);
+		search(keyword: string | DistrictSearchOptions, callback: (status: string, result: DistrictSearchResult) => void): void;
+		setLevel(level: string): void;
+		setSubdistrict(level: number): void;
+	}
+
+	interface DistrictSearchOptions {
+		level: string;
+		subdistrict?: number;
+		[key: string]: any;
+	}
+
+	interface DistrictSearchResult {
+		districtList: District[];
+	}
+
+	interface District {
+		adcode: string;
+		name: string;
+		center: LngLat;
+		boundaries: any[];
+		level: string;
+	}
+
+	class InfoWindow {
+		constructor(options?: InfoWindowOptions);
+		open(map: Map, position?: [number, number] | LngLat): void;
+		close(): void;
+		setContent(content: string | HTMLElement): void;
+		setPosition(position: [number, number] | LngLat): void;
+		getPosition(): LngLat;
+		isOpen(): boolean;
+	}
+
+	interface InfoWindowOptions {
+		content?: string | HTMLElement;
+		isCustom?: boolean;
+		autoMove?: boolean;
+		closeWhenClickMap?: boolean;
+		offset?: Pixel;
+		size?: Size;
+		position?: [number, number] | LngLat;
+		showShadow?: boolean;
+		[key: string]: any;
+	}
+
+	class Polyline {
+		constructor(options?: PolylineOptions);
+		setMap(map: Map | null): void;
+		setPath(path: ([number, number] | LngLat)[]): void;
+		getPath(): LngLat[];
+	}
+
+	interface PolylineOptions {
+		path?: ([number, number] | LngLat)[];
+		isOutline?: boolean;
+		borderColor?: string;
+		outlineColor?: string;
+		borderWeight?: number;
+		strokeColor?: string;
+		strokeOpacity?: number;
+		strokeWeight?: number;
+		strokeStyle?: string;
+		strokeDasharray?: number[];
+		lineJoin?: string;
+		lineCap?: string;
+		zIndex?: number;
+		showDir?: boolean;
+		[key: string]: any;
+	}
+
+	class Polygon {
+		constructor(options?: PolygonOptions);
+		setMap(map: Map | null): void;
+		setPath(path: ([number, number] | LngLat)[][]): void;
+		getPath(): LngLat[][];
+	}
+
+	interface PolygonOptions {
+		path?: ([number, number] | LngLat)[][];
+		strokeColor?: string;
+		strokeOpacity?: number;
+		strokeWeight?: number;
+		fillColor?: string;
+		fillOpacity?: number;
+		draggable?: boolean;
+		zIndex?: number;
+		[key: string]: any;
+	}
+
+	class Circle {
+		constructor(options?: CircleOptions);
+		setMap(map: Map | null): void;
+		setCenter(center: [number, number] | LngLat): void;
+		getCenter(): LngLat;
+		setRadius(radius: number): void;
+		getRadius(): number;
+	}
+
+	interface CircleOptions {
+		center?: [number, number] | LngLat;
+		radius?: number;
+		strokeColor?: string;
+		strokeOpacity?: number;
+		strokeWeight?: number;
+		fillColor?: string;
+		fillOpacity?: number;
+		strokeStyle?: string;
+		zIndex?: number;
+		[key: string]: any;
+	}
+
+	class MarkerClusterer {
+		constructor(map: Map, markers: Marker[], options?: MarkerClustererOptions);
+		addMarkers(markers: Marker[]): void;
+		removeMarkers(markers: Marker[]): void;
+		clearMarkers(): void;
+		setMap(map: Map | null): void;
+		getMarkers(): Marker[];
+		getClusters(): any[];
+		setMaxZoom(maxZoom: number): void;
+		setGridSize(gridSize: number): void;
+		setAverageCenter(averageCenter: boolean): void;
+		setMinClusterSize(minClusterSize: number): void;
+		setStyles(styles: any[]): void;
+	}
+
+	interface MarkerClustererOptions {
+		gridSize?: number;
+		maxZoom?: number;
+		averageCenter?: boolean;
+		minClusterSize?: number;
+		styles?: any[];
+		[key: string]: any;
+	}
+
+	class Geolocation {
+		constructor(options?: GeolocationOptions);
+		getCurrentPosition(callback?: (status: string, result: any) => void): void;
+		watchPosition(callback?: (status: string, result: any) => void): void;
+		clearWatch(): void;
+	}
+
+	interface GeolocationOptions {
+		enableHighAccuracy?: boolean;
+		timeout?: number;
+		maximumAge?: number;
+		convert?: boolean;
+		showButton?: boolean;
+		showMarker?: boolean;
+		showCircle?: boolean;
+		panToLocation?: boolean;
+		zoomToAccuracy?: boolean;
+		[key: string]: any;
+	}
+
+	namespace service {
+		class Geocoder {
+			constructor(options?: any);
+			getAddress(location: LngLat, callback: (status: string, result: any) => void): void;
+			getLocation(address: string, callback: (status: string, result: any) => void): void;
+		}
+
+		class PlaceSearch {
+			constructor(options?: any);
+			search(keyword: string, callback?: (status: string, result: any) => void): void;
+			searchNearBy(keyword: string, center: LngLat, radius: number, callback?: (status: string, result: any) => void): void;
+		}
+	}
+}
+
+declare const AMap: typeof AMap;
+
 // 声明一个模块，防止引入文件时报错
 declare module '*.json';
 declare module '*.png';

@@ -197,6 +197,11 @@ const isLoginPage = computed(() => {
   return route.path === '/login';
 });
 
+// 判断是否是数据大屏页面
+const isDataViewPage = computed(() => {
+  return route.path === '/dataView';
+});
+
 // 根据天气状况计算对应的图标
 const getWeatherIcon = computed(() => {
   const condition = weatherData.value.condition;
@@ -294,8 +299,8 @@ const getWeatherIcon = computed(() => {
       
       <!-- 主内容区域 -->
       <div class="main-container">
-        <!-- 左侧二级菜单 -->
-        <aside class="side-nav">
+        <!-- 左侧二级菜单（数据大屏页面不显示） -->
+        <aside v-if="!isDataViewPage" class="side-nav">
           <ul class="side-nav-list">
             <li 
               v-for="child in currentSubMenu" 
@@ -309,13 +314,13 @@ const getWeatherIcon = computed(() => {
         </aside>
         
         <!-- 路由视图 -->
-        <main class="app-main">
+        <main :class="['app-main', isDataViewPage ? 'full-width' : '']">
           <router-view />
         </main>
       </div>
       
-      <!-- 页脚 -->
-      <footer class="app-footer">
+      <!-- 页脚（数据大屏页面不显示） -->
+      <footer v-if="!isDataViewPage" class="app-footer">
         <p>&copy; 2026 农业中国 - 智慧农业解决方案</p>
       </footer>
     </template>
@@ -569,6 +574,13 @@ body {
   padding: 24px;
   background-color: #ffffff;
   overflow-y: auto;
+}
+
+/* 数据大屏页面的主内容区域 */
+.app-main.full-width {
+  width: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 /* 页脚 */
