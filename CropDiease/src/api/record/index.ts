@@ -96,6 +96,13 @@ export function useRecordApi() {
                 method: 'get',
                 params
             });
+        },
+        // 获取未解决的告警历史记录
+        getUnresolvedAlerts: () => {
+            return request({
+                url: '/api/greenhouse-alert-history/unresolved',
+                method: 'get'
+            });
         }
     };
 }

@@ -561,54 +561,79 @@ onMounted(() => {
 
 /* 联系我们 */
 .contact-section {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
 .contact-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
   margin-bottom: 40px;
 }
 
 .contact-card {
+  transition: all 0.3s ease;
+}
+
+.contact-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.contact-card :deep(.el-card__body) {
   display: flex;
   align-items: center;
   gap: 16px;
+  padding: 20px;
 }
 
 .contact-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 60px;
-  height: 60px;
-  background-color: #f0f9eb;
-  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #67C23A 0%, #85ce61 100%);
+  border-radius: 12px;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
+}
+
+.contact-icon .el-icon {
+  color: #fff !important;
+}
+
+.contact-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .contact-info h4 {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  color: #333;
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
 }
 
 .contact-value {
   margin: 0 0 4px 0;
-  font-size: 18px;
-  color: #67C23A;
+  font-size: 16px;
+  color: #333;
   font-weight: 600;
+  word-break: break-all;
 }
 
 .contact-value.clickable {
   cursor: pointer;
-  text-decoration: underline;
+  color: #67C23A;
+  text-decoration: none;
+  transition: color 0.2s;
 }
 
 .contact-value.clickable:hover {
   color: #85ce61;
+  text-decoration: underline;
 }
 
 .contact-desc {
@@ -620,20 +645,30 @@ onMounted(() => {
 /* 反馈区域 */
 .feedback-section {
   text-align: center;
-  padding: 40px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
+  padding: 40px 32px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+  border-radius: 12px;
+  border: 1px solid #e8e8e8;
 }
 
 .feedback-section h3 {
   margin: 0 0 12px 0;
-  font-size: 20px;
+  font-size: 22px;
   color: #333;
+  font-weight: 600;
 }
 
 .feedback-section p {
-  margin: 0 0 20px 0;
+  margin: 0 0 24px 0;
   color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.feedback-section .el-button {
+  padding: 12px 32px;
+  font-size: 15px;
+  border-radius: 8px;
 }
 
 /* 响应式 */

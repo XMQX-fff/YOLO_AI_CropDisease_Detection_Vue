@@ -38,31 +38,27 @@ const selectedGreenhouse = ref<any>(null);
 // 病虫害类型分布数据
 const diseaseTypeDistribution = ref<any[]>([]);
 
+// 未解决告警数据
+const unresolvedAlerts = ref<any[]>([]);
+
 // 统计数据
 const statistics = computed(() => {
   const total = greenhouseList.value.length;
   
-  // 先判断离线状态
-  const isOffline = (g: any) => !g.recordTime || 
-    (new Date().getTime() - new Date(g.recordTime).getTime() > 24 * 60 * 60 * 1000);
+  // 使用onlineStatus字段判断离线状态 (0-离线, 1-在线)
+  const offline = greenhouseList.value.filter(g => g.onlineStatus === 0).length;
   
-  // 离线温室
-  const offline = greenhouseList.value.filter(g => isOffline(g)).length;
+  // 在线温室
+  const onlineGreenhouses = greenhouseList.value.filter(g => g.onlineStatus === 1);
   
-  // 在线温室中判断正常和告警
-  const onlineGreenhouses = greenhouseList.value.filter(g => !isOffline(g));
+  // 有未解决告警的温室ID集合
+  const warningGreenhouseIds = new Set(unresolvedAlerts.value.map(alert => alert.greenhouseId));
   
-  const normal = onlineGreenhouses.filter(g => {
-    const temp = g.temperature || 0;
-    const humidity = g.airHumidity || 0;
-    return temp >= 15 && temp <= 35 && humidity >= 40 && humidity <= 80;
-  }).length;
+  // 正常温室：在线且没有未解决告警
+  const normal = onlineGreenhouses.filter(g => !warningGreenhouseIds.has(g.id)).length;
   
-  const warning = onlineGreenhouses.filter(g => {
-    const temp = g.temperature || 0;
-    const humidity = g.airHumidity || 0;
-    return temp < 15 || temp > 35 || humidity < 40 || humidity > 80;
-  }).length;
+  // 告警温室：在线且有未解决告警
+  const warning = onlineGreenhouses.filter(g => warningGreenhouseIds.has(g.id)).length;
   
   return { total, normal, warning, offline };
 });
@@ -176,6 +172,18 @@ const fetchAlertList = async () => {
     }
   } catch (error) {
     console.error('获取告警列表失败:', error);
+  }
+};
+
+// 获取未解决告警列表
+const fetchUnresolvedAlerts = async () => {
+  try {
+    const response = await recordApi.getUnresolvedAlerts();
+    if (String(response.code) === '0' || String(response.code) === '200') {
+      unresolvedAlerts.value = response.data || [];
+    }
+  } catch (error) {
+    console.error('获取未解决告警失败:', error);
   }
 };
 
@@ -651,30 +659,6 @@ const showGreenhouseInfo = async (location: any) => {
   infoWindow.value.open(mapInstance.value, [location.value[0], location.value[1]]);
 };
 
-// 返回上一级地图
-const goBackMap = async () => {
-  if (mapStack.value.length > 0) {
-    const prevMap = mapStack.value.pop();
-    if (prevMap) {
-      currentMapLevel.value = prevMap.level;
-      currentMapName.value = prevMap.name;
-      currentMapCode.value = prevMap.code;
-      
-      if (prevMap.level === 'country') {
-        await loadMap('china', prevMap.name);
-      } else {
-        await loadMapByCode(prevMap.code, prevMap.name, prevMap.level);
-      }
-    }
-  } else {
-    // 没有历史记录，返回中国地图
-    currentMapLevel.value = 'country';
-    currentMapName.value = '中国';
-    currentMapCode.value = '100000';
-    await loadMap('china', '中国');
-  }
-};
-
 // 初始化左侧图表
 const leftCharts = ref<{ [key: string]: echarts.ECharts | null }>({
   greenhouseStatus: null,
@@ -956,6 +940,7 @@ onMounted(async () => {
   await Promise.all([
     fetchGreenhouseList(),
     fetchAlertList(),
+    fetchUnresolvedAlerts(),
     fetchRecordList(),
     fetchDeviceList(),
     fetchDiseaseTypeDistribution()
@@ -1103,15 +1088,6 @@ const getAlertLevelText = (level: string) => {
           <div class="map-title">
             <span>温室地理分布</span>
             <span class="map-level">{{ currentMapName }}</span>
-            <el-button 
-              v-if="currentMapLevel !== 'country'" 
-              size="small" 
-              type="primary" 
-              @click="goBackMap"
-              class="back-btn"
-            >
-              返回上级
-            </el-button>
           </div>
           
           <!-- 地图图例 -->
@@ -1161,17 +1137,17 @@ const getAlertLevelText = (level: string) => {
           </div>
           <div class="panel-body">
             <div class="alert-list">
-              <div v-for="alert in alertList.slice(0, 5)" :key="alert.id" class="alert-item">
+              <div v-for="alert in unresolvedAlerts.slice(0, 5)" :key="alert.id" class="alert-item">
                 <div class="alert-header">
                   <span :class="['alert-level', getAlertLevelClass(alert.alertLevel)]">
                     {{ getAlertLevelText(alert.alertLevel) }}
                   </span>
-                  <span class="alert-time">{{ alert.alertTime?.substring(11, 19) || '--:--:--' }}</span>
+                  <span class="alert-time">{{ alert.triggerTime?.substring(11, 19) || '--:--:--' }}</span>
                 </div>
-                <div class="alert-content">{{ alert.alertMessage || '暂无告警信息' }}</div>
-                <div class="alert-source">来源: {{ alert.greenhouseName || '未知温室' }}</div>
+                <div class="alert-content">{{ alert.alertTitle || alert.alertContent || '暂无告警信息' }}</div>
+                <div class="alert-source">温室ID: {{ alert.greenhouseId || '未知' }}</div>
               </div>
-              <div v-if="alertList.length === 0" class="no-data">暂无告警信息</div>
+              <div v-if="unresolvedAlerts.length === 0" class="no-data">暂无告警信息</div>
             </div>
           </div>
         </div>
@@ -1492,11 +1468,6 @@ const getAlertLevelText = (level: string) => {
   border: 1px solid rgba(0, 212, 255, 0.3);
 }
 
-.back-btn {
-  background: linear-gradient(90deg, #0066aa, #004488);
-  border: 1px solid #00aaff;
-}
-
 .map-legend {
   position: absolute;
   bottom: 20px;
@@ -1722,5 +1693,30 @@ const getAlertLevelText = (level: string) => {
   color: #88aacc;
   padding: 20px;
   font-size: 13px;
+}
+
+/* 自定义滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 40, 80, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(0, 212, 255, 0.6) 0%, rgba(0, 150, 200, 0.6) 100%);
+  border-radius: 3px;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(0, 212, 255, 0.8) 0%, rgba(0, 180, 220, 0.8) 100%);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 </style>

@@ -197,9 +197,9 @@ const isLoginPage = computed(() => {
   return route.path === '/login';
 });
 
-// 判断是否是数据大屏页面
+// 判断是否是数据大屏页面或首页
 const isDataViewPage = computed(() => {
-  return route.path === '/dataView';
+  return route.path === '/dataView' || route.path === '/';
 });
 
 // 根据天气状况计算对应的图标
