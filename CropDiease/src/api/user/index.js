@@ -44,6 +44,14 @@ export function useUserApi() {
                 method: 'delete'
             });
         },
+        exportUser: (params) => {
+            return request({
+                url: '/api/user/export',
+                method: 'get',
+                params,
+                responseType: 'blob'
+            });
+        },
         login: (data) => {
             return request({
                 url: '/api/user/login',

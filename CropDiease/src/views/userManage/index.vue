@@ -23,6 +23,12 @@
           </el-icon>
           添加
         </el-button>
+        <el-button size="default" type="warning" class="ml10" @click="onExport">
+          <el-icon>
+            <Download />
+          </el-icon>
+          导出
+        </el-button>
       </div>
       
       <!-- 数据表格 -->
@@ -65,14 +71,17 @@
         </el-pagination>
       </div>
     </div>
+    
+    <userDialog ref="userDialogRef" @refresh="getTableData" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, onMounted, ref } from 'vue';
 import { ElMessageBox, ElMessage } from 'element-plus';
-import { Search as ElIconSearch, Plus as ElIconPlus } from '@element-plus/icons-vue';
+import { Search as ElIconSearch, Plus as ElIconPlus, Download } from '@element-plus/icons-vue';
 import { useUserApi } from '/@/api/user';
+import userDialog from './userDialog.vue';
 
 // 定义类型
 interface SysRoleState {
@@ -89,8 +98,69 @@ interface SysRoleState {
 }
 
 // 定义变量内容
-const roleDialogRef = ref();
+const userDialogRef = ref<InstanceType<typeof userDialog>>();
 const userApi = useUserApi();
+
+// 打开新增用户弹窗
+const onOpenAddRole = async (type: string) => {
+  userDialogRef.value?.openDialog('add');
+};
+
+// 打开修改用户弹窗
+const onOpenEditRole = async (type: string, row: any) => {
+  userDialogRef.value?.openDialog('edit', row);
+};
+
+// 导出用户数据
+const onExport = () => {
+  if (state.tableData.data.length === 0) {
+    ElMessage.warning('暂无数据可导出');
+    return;
+  }
+  
+  const exportData = state.tableData.data.map((item: any, index: number) => ({
+    序号: index + 1,
+    账号: item.username,
+    姓名: item.name,
+    性别: item.sex,
+    邮箱: item.email,
+    手机号码: item.tel,
+    角色: item.role,
+  }));
+  
+  const headers = ['序号', '账号', '姓名', '性别', '邮箱', '手机号码', '角色'];
+  let csvContent = '\uFEFF' + headers.join(',') + '\n';
+  
+  exportData.forEach((row: any) => {
+    const rowData = [
+      row.序号,
+      row.账号,
+      row.姓名,
+      row.性别,
+      row.邮箱,
+      row.手机号码,
+      row.角色,
+    ].map(item => {
+      const str = String(item || '');
+      return str.includes(',') || str.includes('"') || str.includes('\n') 
+        ? `"${str.replace(/"/g, '""')}"` 
+        : str;
+    });
+    csvContent += rowData.join(',') + '\n';
+  });
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `用户列表_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+  
+  ElMessage.success('导出成功');
+};
+
 const state = reactive<SysRoleState>({
   tableData: {
     data: [] as any,
@@ -138,38 +208,6 @@ const getTableData = async () => {
     state.tableData.total = 0;
   } finally {
     state.tableData.loading = false;
-  }
-};
-
-// 打开新增用户弹窗
-const onOpenAddRole = async (type: string) => {
-  try {
-    // 这里可以打开添加用户的表单
-    ElMessage({
-      type: 'info',
-      message: '添加用户功能开发中',
-    });
-  } catch (error) {
-    ElMessage({
-      type: 'error',
-      message: '操作失败',
-    });
-  }
-};
-
-// 打开修改用户弹窗
-const onOpenEditRole = async (type: string, row: any) => {
-  try {
-    // 这里可以打开修改用户的表单
-    ElMessage({
-      type: 'info',
-      message: '修改用户功能开发中',
-    });
-  } catch (error) {
-    ElMessage({
-      type: 'error',
-      message: '操作失败',
-    });
   }
 };
 

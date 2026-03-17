@@ -99,8 +99,8 @@ const navMenu = [
     path: '/infoGreenhouse', 
     name: '智能温室',
     children: [
-      { path: '/infoGreenhouse/overview', name: '总览大屏' },
       { path: '/infoGreenhouse', name: '温室管理' },
+      { path: '/infoGreenhouse/overview', name: '总览大屏' },
       { path: '/detailsEnv', name: '环境监测' },
       { path: '/infoGreenhouse/device', name: '设备控制' },
       { path: '/infoGreenhouse/analysis', name: '数据分析' },

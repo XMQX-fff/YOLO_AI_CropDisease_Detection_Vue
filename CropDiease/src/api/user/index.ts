@@ -7,6 +7,7 @@ import request from '/@/utils/request';
  * @method addUser 添加用户
  * @method updateUser 更新用户
  * @method deleteUser 删除用户
+ * @method exportUser 导出用户
  * @method login 用户登录
  * @method register 用户注册
  */
@@ -43,6 +44,14 @@ export function useUserApi() {
             return request({
                 url: `/api/user/${id}`,
                 method: 'delete'
+            });
+        },
+        exportUser: (params: object) => {
+            return request({
+                url: '/api/user/export',
+                method: 'get',
+                params,
+                responseType: 'blob'
             });
         },
         login: (data: object) => {
