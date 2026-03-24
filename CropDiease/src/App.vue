@@ -130,7 +130,15 @@ const navMenu = [
     ]
   },
   { path: '/storageManage', name: '库存管理' },
-  { path: '/smartChat', name: '智能助手' },
+  {
+    path: '/smartChat',
+    name: '智能助手',
+    children: [
+      { path: '/smartChat', name: 'AI对话' },
+      { path: '/knowledgeChat', name: '知识库问答' },
+      { path: '/documentManage', name: '文档管理', requireAdmin: true }
+    ]
+  },
   { path: '/userManage', name: '用户管理' },
   { path: '/personal', name: '个人中心' }
 ];
@@ -152,18 +160,27 @@ const isChildActive = (children: any[]) => {
   return children.some(child => currentPath.value === child.path);
 };
 
-// 获取当前页面对应的二级菜单
+// 判断是否是管理员
+const isAdmin = computed(() => {
+  if (!userInfo.value) return false;
+  return userInfo.value.role === 'admin' || userInfo.value.role === 1 || userInfo.value.isAdmin === true;
+});
+
+// 获取当前页面对应的二级菜单（过滤掉无权限的菜单）
 const currentSubMenu = computed(() => {
   // 查找当前路径对应的菜单项
   for (const item of navMenu) {
     if (item.children) {
       // 检查当前路径是否是子菜单中的某个页面
-      if (item.children.some((child: any) => child.path === currentPath.value)) {
-        return item.children;
-      }
-      // 检查当前路径是否是父菜单本身
-      if (item.path === currentPath.value && item.children) {
-        return item.children;
+      const hasActiveChild = item.children.some((child: any) => child.path === currentPath.value);
+      if (hasActiveChild || item.path === currentPath.value) {
+        // 过滤需要管理员权限的菜单
+        return item.children.filter((child: any) => {
+          if (child.requireAdmin) {
+            return isAdmin.value;
+          }
+          return true;
+        });
       }
     }
   }

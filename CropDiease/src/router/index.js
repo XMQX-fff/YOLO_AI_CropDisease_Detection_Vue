@@ -22,6 +22,9 @@ import InfoGreenhouseAnalysis from '../views/infoGreenhouse/analysis.vue';
 import InfoGreenhouseAlert from '../views/infoGreenhouse/alert.vue';
 import InfoGreenhouseHelp from '../views/infoGreenhouse/help.vue';
 import InfoGreenhouseOverview from '../views/infoGreenhouse/overview.vue';
+import KnowledgeChat from '../views/rag/knowledgeChat.vue';
+import DocumentManage from '../views/rag/documentManage.vue';
+
 const routes = [
     {
         path: '/',
@@ -207,19 +210,57 @@ const routes = [
             title: '个人中心'
         }
     },
+    // RAG知识库路由
+    {
+        path: '/knowledgeChat',
+        name: 'KnowledgeChat',
+        component: KnowledgeChat,
+        meta: {
+            title: '知识库问答'
+        }
+    },
+    {
+        path: '/documentManage',
+        name: 'DocumentManage',
+        component: DocumentManage,
+        meta: {
+            title: '文档管理',
+            requireAdmin: true
+        }
+    },
     // 其他路由可以在这里添加
     {
         path: '/:pathMatch(.*)*',
         redirect: '/'
     }
 ];
+
 const router = createRouter({
     history: createWebHistory(),
     routes
 });
+
 router.beforeEach((to, from, next) => {
     // 设置页面标题
     document.title = to.meta.title || '农业中国';
-    next();
+
+    // 检查管理员权限
+    if (to.meta.requireAdmin) {
+        const userInfo = localStorage.getItem('userInfo');
+        if (userInfo) {
+            const user = JSON.parse(userInfo);
+            // 假设管理员角色为 'admin' 或 role === 1
+            if (user.role === 'admin' || user.role === 1 || user.isAdmin === true) {
+                next();
+            } else {
+                next('/');
+            }
+        } else {
+            next('/login');
+        }
+    } else {
+        next();
+    }
 });
+
 export default router;

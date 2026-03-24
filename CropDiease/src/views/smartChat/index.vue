@@ -1,14 +1,11 @@
 <template>
   <div class="smart-chat-container">
-    <!-- 页面内容区域 -->
     <div class="page-content">
-      <!-- 页面标题 -->
       <div class="page-header">
         <h1 class="page-title">智能助手</h1>
         <p class="page-subtitle">DeepSeek Chat 农业智能问答</p>
       </div>
       
-      <!-- 聊天区域 -->
       <div class="chat-section">
         <div class="chat-messages" ref="messageContainer">
           <div v-for="(message, index) in messages" :key="index" 
@@ -33,7 +30,6 @@
           </div>
         </div>
     
-        <!-- 推荐问题 -->
         <div class="suggested-questions" v-if="messages.length === 1">
           <div class="suggested-title">猜你想问</div>
           <div class="suggested-list">
@@ -46,7 +42,6 @@
           </div>
         </div>
 
-        <!-- 输入区域 -->
         <div class="chat-input">
           <el-input
             v-model="userInput"
@@ -70,13 +65,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from 'vue';
+import { ref, nextTick, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import { useChatApi, type ChatRequest } from '/@/api/chat';
 
-// 定义变量
+const chatApi = useChatApi();
+
 const messageContainer = ref<HTMLElement>();
 const userInput = ref('');
 const loading = ref(false);
+const sessionId = ref<string>(`session-${Date.now()}`);
 const messages = ref([
   {
     role: 'assistant',
@@ -94,38 +92,30 @@ const suggestedQuestions = [
   '如何识别植物病害症状？'
 ];
 
-// Markdown渲染函数
 const renderMarkdown = (text: string): string => {
   if (!text) return '';
   
-  // 替换标题
   text = text.replace(/^### (.*$)/gim, '<h3 class="markdown-h3">$1</h3>');
   text = text.replace(/^## (.*$)/gim, '<h2 class="markdown-h2">$1</h2>');
   text = text.replace(/^# (.*$)/gim, '<h1 class="markdown-h1">$1</h1>');
   
-  // 替换粗体
   text = text.replace(/\*\*(.*?)\*\*/gim, '<strong class="markdown-bold">$1</strong>');
   
-  // 替换列表
   text = text.replace(/^\s*\-\s+(.*$)/gim, '<li class="markdown-list-item">$1</li>');
   text = text.replace(/(<li class="markdown-list-item">[\s\S]*?<\/li>)/gim, '<ul class="markdown-list">$1</ul>');
   
-  // 替换行内代码
   text = text.replace(/`(.*?)`/gim, '<code class="markdown-code">$1</code>');
   
-  // 替换段落
   text = text.replace(/^(?!<h[1-6]>)(?!<li>)(?!<ul>)(?!<code>)(.*$)/gim, '<p class="markdown-paragraph">$1</p>');
   
   return text;
 };
 
-// 选择推荐问题
 const selectQuestion = (question: string) => {
   userInput.value = question;
   sendMessage();
 };
 
-// 发送消息
 const sendMessage = async () => {
   if (!userInput.value.trim() || loading.value) return;
 
@@ -138,56 +128,40 @@ const sendMessage = async () => {
   userInput.value = '';
   loading.value = true;
 
-  // 滚动到底部
   await nextTick();
   scrollToBottom();
 
   try {
-    // 添加一个临时的assistant消息用于显示流式输出
     const assistantMessageIndex = messages.value.length;
     messages.value.push({
       role: 'assistant',
       content: ''
     });
     
-    // 模拟API响应
-    setTimeout(() => {
-      let fullContent = '';
-      const responses: string[] = [
-        '我是农业智能助手，专注于农作物种植和病虫害防治领域。',
-        '针对您的问题，我需要分析具体情况。',
-        '以下是一些建议：',
-        '1. 定期检查作物生长状况',
-        '2. 合理施肥和灌溉',
-        '3. 及时防治病虫害',
-        '4. 选择适合当地气候的作物品种'
-      ];
-      
-      let index = 0;
-      const interval = setInterval(() => {
-        if (index < responses.length) {
-          fullContent += responses[index] + '\n';
-          messages.value[assistantMessageIndex].content = fullContent;
-          nextTick(() => {
-            scrollToBottom();
-          });
-          index++;
-        } else {
-          clearInterval(interval);
-          loading.value = false;
-          nextTick(() => {
-            scrollToBottom();
-          });
-        }
-      }, 300);
-    }, 1000);
+    const request: ChatRequest = {
+      message: userMessage,
+      sessionId: sessionId.value
+    };
+    
+    // 使用SSE接口并逐字显示
+    await chatApi.chatWithMemorySse(request, (chunk: string) => {
+      // 逐字追加到消息内容
+      messages.value[assistantMessageIndex].content += chunk;
+      nextTick(() => {
+        scrollToBottom();
+      });
+    });
+    
+    loading.value = false;
+    nextTick(() => {
+      scrollToBottom();
+    });
   } catch (error) {
     ElMessage({
       type: 'error',
       message: '发送消息失败，请稍后重试',
     });
     console.error('Error:', error);
-    // 移除最后一个空的assistant消息
     if (messages.value[messages.value.length - 1].content === '') {
       messages.value.pop();
     }
@@ -195,16 +169,13 @@ const sendMessage = async () => {
   }
 };
 
-// 滚动到底部
 const scrollToBottom = () => {
   if (messageContainer.value) {
     messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
   }
 };
 
-// 页面加载时
 onMounted(() => {
-  // 初始化滚动位置
   scrollToBottom();
 });
 </script>
@@ -438,7 +409,6 @@ onMounted(() => {
   66% { content: '...'; }
 }
 
-/* Markdown样式 */
 .markdown-h1 {
   font-size: 20px;
   font-weight: 600;
@@ -493,7 +463,6 @@ onMounted(() => {
   color: #dc2626;
 }
 
-/* 自定义滚动条样式 */
 .chat-messages::-webkit-scrollbar {
   width: 6px;
 }
@@ -512,7 +481,6 @@ onMounted(() => {
   background: #9ca3af;
 }
 
-/* 响应式调整 */
 @media (max-width: 768px) {
   .smart-chat-container {
     padding: 16px;
