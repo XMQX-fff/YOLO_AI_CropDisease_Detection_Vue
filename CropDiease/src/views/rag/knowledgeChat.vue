@@ -34,7 +34,7 @@
                       <div v-for="(source, sIndex) in message.sources" :key="sIndex" class="source-item">
                         <div class="source-header">
                           <span class="source-name">{{ source.documentName }}</span>
-                          <el-tag size="small" type="success">相似度: {{ (source.score * 100).toFixed(1) }}%</el-tag>
+                          <el-tag size="small" type="success">相似度: {{ ((1 - source.metadata.distance) * 100).toFixed(2) }}%</el-tag>
                         </div>
                         <div class="source-content">{{ source.content }}</div>
                       </div>
@@ -116,9 +116,24 @@
 import { ref, nextTick, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Document, ArrowDown, Promotion } from '@element-plus/icons-vue';
-import { useRagApi, type RagQueryRequest, type SourceDocument } from '/@/api/rag';
+import { useRagApi } from '/@/api/rag';
 
 const ragApi = useRagApi();
+
+// 类型定义
+interface SourceDocument {
+  content: string;
+  documentName: string;
+  score: number;
+  metadata: any;
+}
+
+interface RagQueryRequest {
+  question: string;
+  topK?: number;
+  similarityThreshold?: number;
+  includeSources?: boolean;
+}
 
 const messageContainer = ref<HTMLElement>();
 const userInput = ref('');

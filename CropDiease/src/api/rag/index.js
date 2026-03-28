@@ -1,38 +1,8 @@
 import request from '/@/utils/request';
 
-export interface RagQueryRequest {
-    question: string;
-    topK?: number;
-    similarityThreshold?: number;
-    includeSources?: boolean;
-}
-
-export interface SourceDocument {
-    content: string;
-    documentName: string;
-    score: number;
-    metadata: any;
-}
-
-export interface RagQueryResponse {
-    answer: string;
-    sources: SourceDocument[];
-    responseTime: number;
-}
-
-export interface DocumentUploadResponse {
-    documentId: number;
-    documentName: string;
-    documentType: string;
-    fileSize: number;
-    chunkCount: number;
-    vectorStatus: string;
-    uploadTime: string;
-}
-
 export function useRagApi() {
     return {
-        uploadDocument: (file: File, userId?: number) => {
+        uploadDocument: (file, userId) => {
             const formData = new FormData();
             formData.append('file', file);
             if (userId) {
@@ -47,7 +17,7 @@ export function useRagApi() {
                 }
             });
         },
-        query: (data: RagQueryRequest) => {
+        query: (data) => {
             return request({
                 url: '/ai-api/rag/query',
                 method: 'post',
@@ -60,7 +30,7 @@ export function useRagApi() {
                 method: 'get'
             });
         },
-        deleteDocument: (documentId: number) => {
+        deleteDocument: (documentId) => {
             return request({
                 url: `/ai-api/rag/document/${documentId}`,
                 method: 'delete'

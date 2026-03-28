@@ -100,9 +100,20 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Upload, Refresh, Delete } from '@element-plus/icons-vue';
-import { useRagApi, type DocumentUploadResponse } from '/@/api/rag';
+import { useRagApi } from '/@/api/rag';
 
 const ragApi = useRagApi();
+
+// 类型定义
+interface DocumentUploadResponse {
+  documentId: number;
+  documentName: string;
+  documentType: string;
+  fileSize: number;
+  chunkCount: number;
+  vectorStatus: string;
+  uploadTime: string;
+}
 
 const loading = ref(false);
 const documentList = ref<DocumentUploadResponse[]>([]);

@@ -4,7 +4,7 @@ import { Session } from '/@/utils/storage';
 // 配置新建一个 axios 实例
 const service = axios.create({
     baseURL: '',
-    timeout: 50000,
+    timeout: 100000,
     headers: {
         'Content-Type': 'application/json;charset=UTF-8',
         'Cache-Control': 'no-cache',

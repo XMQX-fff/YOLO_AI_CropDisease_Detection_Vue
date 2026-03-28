@@ -131,13 +131,13 @@ const navMenu = [
   },
   { path: '/storageManage', name: '库存管理' },
   {
-    path: '/smartChat',
-    name: '智能助手',
-    children: [
-      { path: '/smartChat', name: 'AI对话' },
-      { path: '/knowledgeChat', name: '知识库问答' },
-      { path: '/documentManage', name: '文档管理', requireAdmin: true }
-    ]
+    path: '/knowledgeChat',
+    name: '知识库问答'
+  },
+  {
+    path: '/documentManage',
+    name: '文档管理',
+    requireAdmin: true
   },
   { path: '/userManage', name: '用户管理' },
   { path: '/personal', name: '个人中心' }

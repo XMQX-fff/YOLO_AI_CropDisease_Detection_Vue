@@ -1,37 +1,15 @@
 import request from '/@/utils/request';
 
-export interface ChatRequest {
-    message: string;
-    sessionId?: string;
-    userId?: number;
-    temperature?: number;
-    maxTokens?: number;
-}
-
-export interface ChatResponse {
-    content: string;
-    sessionId: string;
-    tokensUsed?: number;
-    model?: string;
-    responseTime?: number;
-}
-
-export interface ApiResponse<T> {
-    code: number;
-    message: string;
-    data: T;
-}
-
 export function useChatApi() {
     return {
-        simpleChat: (data: ChatRequest) => {
+        simpleChat: (data) => {
             return request({
                 url: '/ai-api/chat/simple',
                 method: 'post',
                 data
             });
         },
-        simpleChatStream: async (data: ChatRequest, onMessage: (text: string) => void) => {
+        simpleChatStream: async (data, onMessage) => {
             const response = await fetch('/ai-api/chat/simple/stream', {
                 method: 'POST',
                 headers: {
@@ -78,14 +56,14 @@ export function useChatApi() {
                 }
             }
         },
-        chatWithMemory: (data: ChatRequest) => {
+        chatWithMemory: (data) => {
             return request({
                 url: '/ai-api/chat/memory',
                 method: 'post',
                 data
             });
         },
-        chatWithMemoryStream: async (data: ChatRequest, onMessage: (text: string) => void) => {
+        chatWithMemoryStream: async (data, onMessage) => {
             const response = await fetch('/ai-api/chat/memory/stream', {
                 method: 'POST',
                 headers: {
@@ -132,7 +110,7 @@ export function useChatApi() {
                 }
             }
         },
-        chatWithMemorySse: async (data: ChatRequest, onMessage: (text: string) => void) => {
+        chatWithMemorySse: async (data, onMessage) => {
             const response = await fetch('/ai-api/chat/memory/sse', {
                 method: 'POST',
                 headers: {
@@ -179,7 +157,7 @@ export function useChatApi() {
                 }
             }
         },
-        clearHistory: (sessionId: string) => {
+        clearHistory: (sessionId) => {
             return request({
                 url: `/ai-api/chat/history/${sessionId}`,
                 method: 'delete'

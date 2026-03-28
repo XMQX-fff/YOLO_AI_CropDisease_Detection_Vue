@@ -14,7 +14,7 @@ import CameraRecord from '../views/cameraRecord/index.vue';
 import PurchaseManage from '../views/purchaseManage/index.vue';
 import PurchaseSupply from '../views/purchaseManage/supply.vue';
 import StorageManage from '../views/storageManage/index.vue';
-import SmartChat from '../views/smartChat/index.vue';
+
 import UserManage from '../views/userManage/index.vue';
 import Personal from '../views/personal/index.vue';
 import InfoGreenhouseDevice from '../views/infoGreenhouse/device.vue';
@@ -184,14 +184,6 @@ const routes = [
         component: StorageManage,
         meta: {
             title: '库存管理'
-        }
-    },
-    {
-        path: '/smartChat',
-        name: 'SmartChat',
-        component: SmartChat,
-        meta: {
-            title: '智能助手'
         }
     },
     {
