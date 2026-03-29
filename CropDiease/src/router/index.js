@@ -12,7 +12,11 @@ import ImgRecord from '../views/imgRecord/index.vue';
 import VideoRecord from '../views/videoRecord/index.vue';
 import CameraRecord from '../views/cameraRecord/index.vue';
 import PurchaseManage from '../views/purchaseManage/index.vue';
-import PurchaseSupply from '../views/purchaseManage/supply.vue';
+import Cart from '../views/purchaseManage/cart.vue';
+import SupplyManage from '../views/supplyManage/index.vue';
+import ProductManage from '../views/supplyManage/productManage.vue';
+import OrderManage from '../views/supplyManage/orderManage.vue';
+import CategoryManage from '../views/supplyManage/categoryManage.vue';
 import StorageManage from '../views/storageManage/index.vue';
 
 import UserManage from '../views/userManage/index.vue';
@@ -171,11 +175,53 @@ const routes = [
         }
     },
     {
-        path: '/purchaseManage/supply',
-        name: 'PurchaseSupply',
-        component: PurchaseSupply,
+        path: '/supplyManage',
+        name: 'SupplyManage',
+        component: SupplyManage,
         meta: {
-            title: '供应管理'
+            title: '供应管理',
+            requireAdminOrSupplier: true
+        },
+        children: [
+            {
+                path: '',
+                redirect: '/supplyManage/product'
+            },
+            {
+                path: 'product',
+                name: 'ProductManage',
+                component: ProductManage,
+                meta: {
+                    title: '商品管理',
+                    requireAdminOrSupplier: true
+                }
+            },
+            {
+                path: 'order',
+                name: 'OrderManage',
+                component: OrderManage,
+                meta: {
+                    title: '订单管理',
+                    requireAdminOrSupplier: true
+                }
+            },
+            {
+                path: 'category',
+                name: 'CategoryManage',
+                component: CategoryManage,
+                meta: {
+                    title: '分类管理',
+                    requireAdmin: true
+                }
+            }
+        ]
+    },
+    {
+        path: '/cart',
+        name: 'Cart',
+        component: Cart,
+        meta: {
+            title: '购物车'
         }
     },
     {
@@ -236,13 +282,47 @@ router.beforeEach((to, from, next) => {
     // 设置页面标题
     document.title = to.meta.title || '农业中国';
 
+    // 获取用户信息
+    const getUserInfo = () => {
+        const userInfoStr = localStorage.getItem('userInfo');
+        if (userInfoStr) {
+            try {
+                return JSON.parse(userInfoStr);
+            } catch (e) {
+                return null;
+            }
+        }
+        return null;
+    };
+
+    const user = getUserInfo();
+    
+    // 调试信息
+    console.log('路由守卫 - 目标路径:', to.path);
+    console.log('路由守卫 - 用户信息:', user);
+    console.log('路由守卫 - requireAdminOrSupplier:', to.meta.requireAdminOrSupplier);
+
+    // 判断用户角色
+    const isAdmin = user && (user.role === 'admin' || user.role === 1 || user.isAdmin === true);
+    const isSupplier = user && (user.role === 'supplier' || user.role === 2 || user.isSupplier === true);
+    
+    // 供应商只能访问特定页面（不包括分类管理）
+    const supplierAllowedPaths = ['/supplyManage', '/supplyManage/product', '/supplyManage/order', '/personal', '/purchaseManage'];
+    if (isSupplier && !isAdmin) {
+        // 检查是否在允许的路径列表中
+        const isAllowed = supplierAllowedPaths.some(path => to.path.startsWith(path));
+        if (!isAllowed) {
+            console.log('路由守卫 - 供应商无权访问该页面，跳转到供应管理');
+            next('/supplyManage');
+            return;
+        }
+    }
+
     // 检查管理员权限
     if (to.meta.requireAdmin) {
-        const userInfo = localStorage.getItem('userInfo');
-        if (userInfo) {
-            const user = JSON.parse(userInfo);
-            // 假设管理员角色为 'admin' 或 role === 1
-            if (user.role === 'admin' || user.role === 1 || user.isAdmin === true) {
+        if (user) {
+            // 管理员角色为 'admin' 
+            if (isAdmin) {
                 next();
             } else {
                 next('/');
@@ -250,9 +330,26 @@ router.beforeEach((to, from, next) => {
         } else {
             next('/login');
         }
-    } else {
-        next();
+        return;
     }
+
+    // 检查管理员或供应商权限
+    if (to.meta.requireAdminOrSupplier) {
+        if (user) {
+            console.log('路由守卫 - isAdmin:', isAdmin, 'isSupplier:', isSupplier);
+            if (isAdmin || isSupplier) {
+                next();
+            } else {
+                next('/');
+            }
+        } else {
+            console.log('路由守卫 - 用户未登录，跳转到登录页');
+            next('/login');
+        }
+        return;
+    }
+
+    next();
 });
 
 export default router;

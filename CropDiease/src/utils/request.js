@@ -16,8 +16,10 @@ const service = axios.create({
 // 添加请求拦截器
 service.interceptors.request.use((config) => {
     // 在发送请求之前做些什么 token
-    if (Session.get('token')) {
-        config.headers['Authorization'] = `${Session.get('token')}`;
+    const token = Session.get('token');
+    const tokenType = Session.get('tokenType') || 'Bearer';
+    if (token) {
+        config.headers['Authorization'] = `${tokenType} ${token}`;
     }
     return config;
 }, (error) => {

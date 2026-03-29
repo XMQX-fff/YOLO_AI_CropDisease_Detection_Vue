@@ -9,6 +9,7 @@ import {
 } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { useLoginApi } from '/@/api/login';
+import { Session } from '/@/utils/storage';
 
 // 定义变量内容
 const router = useRouter();
@@ -55,13 +56,14 @@ const submitForm = async (formEl: FormInstance | undefined) => {
           password: ruleForm.password
         });
         
-        if (res.code === '0' || res.code === 0) {
+        if (res.code === 200) {
           ElMessage.success('登录成功！');
           
-          // 存储用户信息
+          // 存储用户信息和token
           if (res.data) {
-            localStorage.setItem('userInfo', JSON.stringify(res.data));
-            localStorage.setItem('token', res.data.id || 'token_' + Date.now());
+            localStorage.setItem('userInfo', JSON.stringify(res.data.user));
+            Session.set('token', res.data.token);
+            Session.set('tokenType', res.data.tokenType || 'Bearer');
           }
           
           // 登录成功后跳转到首页

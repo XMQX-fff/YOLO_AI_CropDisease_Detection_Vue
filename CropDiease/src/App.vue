@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { ElMessageBox, ElMessage } from 'element-plus';
 import { User, SwitchButton } from '@element-plus/icons-vue';
 import { useLoginApi } from '/@/api/login';
+import { Session } from '/@/utils/storage';
 
 const route = useRoute();
 const router = useRouter();
@@ -17,8 +18,10 @@ const userInfo = ref<any>(null);
 const loadUserInfo = () => {
   try {
     const storedUserInfo = localStorage.getItem('userInfo');
+    console.log('App.vue - 从localStorage读取的用户信息:', storedUserInfo);
     if (storedUserInfo) {
       userInfo.value = JSON.parse(storedUserInfo);
+      console.log('App.vue - 解析后的userInfo:', userInfo.value);
     }
   } catch (err) {
     console.error('加载用户信息失败:', err);
@@ -70,7 +73,7 @@ const handleLogout = async () => {
     );
     
     // 清除本地存储
-    localStorage.removeItem('token');
+    Session.clear();
     localStorage.removeItem('userInfo');
     userInfo.value = null;
     
@@ -96,7 +99,7 @@ const navMenu = [
   { path: '/', name: '首页' },
   { path: '/dataView', name: '数据大屏' },
   {
-    path: '/infoGreenhouse', 
+    path: '/infoGreenhouse',
     name: '智能温室',
     children: [
       { path: '/infoGreenhouse', name: '温室管理' },
@@ -108,8 +111,8 @@ const navMenu = [
       { path: '/infoGreenhouse/help', name: '帮助文档' }
     ]
   },
-  { 
-    path: '/infoDisease', 
+  {
+    path: '/infoDisease',
     name: '病虫害检测',
     children: [
       { path: '/infoDisease', name: '病虫害数据库' },
@@ -121,12 +124,15 @@ const navMenu = [
       { path: '/cameraRecord', name: '摄像头预测记录' }
     ]
   },
-  { 
-    path: '/purchaseManage', 
-    name: '农资采购',
+  { path: '/purchaseManage', name: '农资采购' },
+  {
+    path: '/supplyManage',
+    name: '供应管理',
+    requireAdminOrSupplier: true,
     children: [
-      { path: '/purchaseManage', name: '农资采购' },
-      { path: '/purchaseManage/supply', name: '供应管理' }
+      { path: '/supplyManage/product', name: '商品管理' },
+      { path: '/supplyManage/order', name: '订单管理' },
+      { path: '/supplyManage/category', name: '分类管理', requireAdmin: true }
     ]
   },
   { path: '/storageManage', name: '库存管理' },
@@ -163,7 +169,52 @@ const isChildActive = (children: any[]) => {
 // 判断是否是管理员
 const isAdmin = computed(() => {
   if (!userInfo.value) return false;
-  return userInfo.value.role === 'admin' || userInfo.value.role === 1 || userInfo.value.isAdmin === true;
+  const result = userInfo.value.role === 'admin' || userInfo.value.role === 1 || userInfo.value.isAdmin === true;
+  console.log('App.vue - isAdmin:', result, 'userInfo:', userInfo.value);
+  return result;
+});
+
+// 判断是否是供应商
+const isSupplier = computed(() => {
+  if (!userInfo.value) return false;
+  const result = userInfo.value.role === 'supplier' || userInfo.value.role === 2 || userInfo.value.isSupplier === true;
+  console.log('App.vue - isSupplier:', result, 'userInfo:', userInfo.value);
+  return result;
+});
+
+// 判断是否是管理员或供应商
+const isAdminOrSupplier = computed(() => {
+  const result = isAdmin.value || isSupplier.value;
+  console.log('App.vue - isAdminOrSupplier:', result);
+  return result;
+});
+
+// 供应商可见的菜单路径
+const supplierAllowedPaths = ['/supplyManage', '/personal', '/purchaseManage'];
+
+// 过滤后的导航菜单（根据权限显示）
+const filteredNavMenu = computed(() => {
+  return navMenu.filter((item: any) => {
+    // 管理员可以看到所有页面
+    if (isAdmin.value) {
+      return true;
+    }
+    
+    // 供应商只能看到特定页面
+    if (isSupplier.value) {
+      return supplierAllowedPaths.includes(item.path);
+    }
+    
+    // 需要管理员权限
+    if (item.requireAdmin) {
+      return false; // 不是管理员，不显示
+    }
+    // 需要管理员或供应商权限
+    if (item.requireAdminOrSupplier) {
+      return false; // 不是管理员也不是供应商，不显示
+    }
+    return true;
+  });
 });
 
 // 获取当前页面对应的二级菜单（过滤掉无权限的菜单）
@@ -260,8 +311,8 @@ const getWeatherIcon = computed(() => {
         <!-- 主导航菜单 -->
         <nav class="main-nav">
           <ul class="nav-list">
-            <li 
-              v-for="item in navMenu" 
+            <li
+              v-for="item in filteredNavMenu"
               :key="item.path"
               :class="['nav-item', (currentPath === item.path || (item.children && isChildActive(item.children))) ? 'active' : '']"
               @click="navigateTo(item.path)"
