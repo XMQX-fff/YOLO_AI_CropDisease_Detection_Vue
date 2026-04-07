@@ -92,6 +92,21 @@ onMounted(() => {
   currentPath.value = route.path;
   fetchWeatherData(); // 获取天气数据
   loadUserInfo(); // 加载用户信息
+  
+  // 监听登录成功事件
+  window.addEventListener('userInfoUpdated', (e: any) => {
+    console.log('App.vue - 收到userInfoUpdated事件:', e.detail);
+    userInfo.value = e.detail;
+  });
+});
+
+// 监听路由变化，当跳转到首页时重新加载用户信息
+watch(() => route.path, (newPath) => {
+  currentPath.value = newPath;
+  if (newPath === '/') {
+    console.log('App.vue - 跳转到首页，重新加载用户信息');
+    loadUserInfo();
+  }
 });
 
 // 导航菜单数据
@@ -124,7 +139,16 @@ const navMenu = [
       { path: '/cameraRecord', name: '摄像头预测记录' }
     ]
   },
-  { path: '/purchaseManage', name: '农资采购' },
+  {
+    path: '/shop',
+    name: '农资采购',
+    children: [
+      { path: '/shop', name: '商城' },
+      { path: '/shop/cart', name: '购物车' },
+      { path: '/shop/order', name: '订单' },
+      { path: '/shop/favorite', name: '收藏' }
+    ]
+  },
   {
     path: '/supplyManage',
     name: '供应管理',
@@ -135,7 +159,6 @@ const navMenu = [
       { path: '/supplyManage/category', name: '分类管理', requireAdmin: true }
     ]
   },
-  { path: '/storageManage', name: '库存管理' },
   {
     path: '/knowledgeChat',
     name: '知识库问答'
@@ -182,6 +205,14 @@ const isSupplier = computed(() => {
   return result;
 });
 
+// 判断是否是普通用户
+const isCommonUser = computed(() => {
+  if (!userInfo.value) return false;
+  const result = userInfo.value.role === 'common' || userInfo.value.role === 3 || userInfo.value.isCommon === true;
+  console.log('App.vue - isCommonUser:', result, 'userInfo:', userInfo.value);
+  return result;
+});
+
 // 判断是否是管理员或供应商
 const isAdminOrSupplier = computed(() => {
   const result = isAdmin.value || isSupplier.value;
@@ -190,7 +221,10 @@ const isAdminOrSupplier = computed(() => {
 });
 
 // 供应商可见的菜单路径
-const supplierAllowedPaths = ['/supplyManage', '/personal', '/purchaseManage'];
+const supplierAllowedPaths = ['/supplyManage', '/personal', '/shop', '/shop/cart', '/shop/order', '/shop/favorite'];
+
+// 普通用户可见的菜单路径
+const commonUserAllowedPaths = ['/', '/dataView', '/infoGreenhouse', '/infoDisease', '/shop', '/knowledgeChat', '/personal'];
 
 // 过滤后的导航菜单（根据权限显示）
 const filteredNavMenu = computed(() => {
@@ -203,6 +237,11 @@ const filteredNavMenu = computed(() => {
     // 供应商只能看到特定页面
     if (isSupplier.value) {
       return supplierAllowedPaths.includes(item.path);
+    }
+    
+    // 普通用户只能看到特定页面
+    if (isCommonUser.value) {
+      return commonUserAllowedPaths.includes(item.path);
     }
     
     // 需要管理员权限
@@ -268,6 +307,11 @@ const isLoginPage = computed(() => {
 // 判断是否是数据大屏页面或首页
 const isDataViewPage = computed(() => {
   return route.path === '/dataView' || route.path === '/';
+});
+
+// 判断是否是农资采购页面
+const isPurchasePage = computed(() => {
+  return route.path.startsWith('/shop');
 });
 
 // 根据天气状况计算对应的图标
@@ -367,7 +411,7 @@ const getWeatherIcon = computed(() => {
       
       <!-- 主内容区域 -->
       <div class="main-container">
-        <!-- 左侧二级菜单（数据大屏页面不显示） -->
+        <!-- 左侧二级菜单（数据大屏页面和农资采购页面不显示） -->
         <aside v-if="!isDataViewPage" class="side-nav">
           <ul class="side-nav-list">
             <li 
@@ -380,7 +424,7 @@ const getWeatherIcon = computed(() => {
             </li>
           </ul>
         </aside>
-        
+
         <!-- 路由视图 -->
         <main :class="['app-main', isDataViewPage ? 'full-width' : '']">
           <router-view />

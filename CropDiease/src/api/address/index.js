@@ -3,7 +3,7 @@ import request from '/@/utils/request'
 // 获取地址列表
 export function getAddressList(userId) {
   return request({
-    url: '/address',
+    url: '/api/address',
     method: 'get',
     params: { userId }
   })
@@ -12,7 +12,7 @@ export function getAddressList(userId) {
 // 获取默认地址
 export function getDefaultAddress(userId) {
   return request({
-    url: '/address/default',
+    url: '/api/address/default',
     method: 'get',
     params: { userId }
   })
@@ -21,7 +21,7 @@ export function getDefaultAddress(userId) {
 // 添加地址
 export function addAddress(data) {
   return request({
-    url: '/address',
+    url: '/api/address',
     method: 'post',
     data
   })
@@ -30,7 +30,7 @@ export function addAddress(data) {
 // 更新地址
 export function updateAddress(id, data) {
   return request({
-    url: `/address/${id}`,
+    url: `/api/address/${id}`,
     method: 'put',
     data
   })
@@ -39,7 +39,7 @@ export function updateAddress(id, data) {
 // 删除地址
 export function deleteAddress(id) {
   return request({
-    url: `/address/${id}`,
+    url: `/api/address/${id}`,
     method: 'delete'
   })
 }
@@ -47,7 +47,7 @@ export function deleteAddress(id) {
 // 设置默认地址
 export function setDefaultAddress(userId, addressId) {
   return request({
-    url: `/address/${addressId}/default`,
+    url: `/api/address/${addressId}/default`,
     method: 'put',
     params: { userId }
   })
@@ -56,7 +56,7 @@ export function setDefaultAddress(userId, addressId) {
 // 获取地址详情
 export function getAddressDetail(id) {
   return request({
-    url: `/address/${id}`,
+    url: `/api/address/${id}`,
     method: 'get'
   })
 }

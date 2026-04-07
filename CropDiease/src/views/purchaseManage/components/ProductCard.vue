@@ -1,9 +1,9 @@
 <template>
-  <div class="product-card">
+  <div class="product-card" v-if="product && product.id">
     <div class="product-image-wrapper">
       <el-image
         :src="product.mainImage || '/images/default-product.jpg'"
-        :alt="product.productName"
+        :alt="product.productName || '商品图片'"
         fit="cover"
         class="product-image"
         @click="goToDetail"
@@ -92,7 +92,7 @@ const formatPrice = (price) => {
 };
 
 const goToDetail = () => {
-  router.push(`/product/${props.product.id}`);
+  router.push(`/shop/product/${props.product.id}`);
 };
 
 const handleAddCart = () => {

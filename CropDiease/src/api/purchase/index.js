@@ -12,10 +12,11 @@ export function getProductList(params) {
 }
 
 // 获取商品详情
-export function getProductDetail(id) {
+export function getProductDetail(id, userId) {
   return request({
     url: `/api/product/${id}`,
-    method: 'get'
+    method: 'get',
+    params: { userId }
   })
 }
 
@@ -123,6 +124,14 @@ export function updateSupplierProductStock(id, stock) {
     url: `/api/supplier/product/${id}/stock`,
     method: 'put',
     params: { stock }
+  })
+}
+
+// 获取供应商商品统计信息
+export function getSupplierProductStatistics() {
+  return request({
+    url: '/api/supplier/product/statistics',
+    method: 'get'
   })
 }
 

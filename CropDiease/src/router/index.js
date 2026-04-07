@@ -12,7 +12,12 @@ import ImgRecord from '../views/imgRecord/index.vue';
 import VideoRecord from '../views/videoRecord/index.vue';
 import CameraRecord from '../views/cameraRecord/index.vue';
 import PurchaseManage from '../views/purchaseManage/index.vue';
+import ProductDetail from '../views/purchaseManage/productDetail.vue';
 import Cart from '../views/purchaseManage/cart.vue';
+import Shop from '../views/purchaseManage/shop.vue';
+import ShopCart from '../views/purchaseManage/shopCart.vue';
+import ShopOrder from '../views/purchaseManage/shopOrder.vue';
+import ShopFavorite from '../views/purchaseManage/shopFavorite.vue';
 import SupplyManage from '../views/supplyManage/index.vue';
 import ProductManage from '../views/supplyManage/productManage.vue';
 import OrderManage from '../views/supplyManage/orderManage.vue';
@@ -175,6 +180,54 @@ const routes = [
         }
     },
     {
+        path: '/product/:id',
+        name: 'ProductDetail',
+        component: ProductDetail,
+        meta: {
+            title: '商品详情'
+        }
+    },
+    {
+        path: '/shop',
+        name: 'Shop',
+        component: Shop,
+        meta: {
+            title: '农资商城'
+        }
+    },
+    {
+        path: '/shop/cart',
+        name: 'ShopCart',
+        component: ShopCart,
+        meta: {
+            title: '购物车'
+        }
+    },
+    {
+        path: '/shop/order',
+        name: 'ShopOrder',
+        component: ShopOrder,
+        meta: {
+            title: '我的订单'
+        }
+    },
+    {
+        path: '/shop/favorite',
+        name: 'ShopFavorite',
+        component: ShopFavorite,
+        meta: {
+            title: '我的收藏'
+        }
+    },
+    {
+        path: '/shop/product/:id',
+        name: 'ShopProductDetail',
+        component: ProductDetail,
+        meta: {
+            title: '商品详情'
+        }
+    },
+    {
         path: '/supplyManage',
         name: 'SupplyManage',
         component: SupplyManage,
@@ -307,7 +360,7 @@ router.beforeEach((to, from, next) => {
     const isSupplier = user && (user.role === 'supplier' || user.role === 2 || user.isSupplier === true);
     
     // 供应商只能访问特定页面（不包括分类管理）
-    const supplierAllowedPaths = ['/supplyManage', '/supplyManage/product', '/supplyManage/order', '/personal', '/purchaseManage'];
+    const supplierAllowedPaths = ['/supplyManage', '/supplyManage/product', '/supplyManage/order', '/personal', '/shop', '/shop/cart', '/shop/order', '/shop/favorite', '/shop/product'];
     if (isSupplier && !isAdmin) {
         // 检查是否在允许的路径列表中
         const isAllowed = supplierAllowedPaths.some(path => to.path.startsWith(path));

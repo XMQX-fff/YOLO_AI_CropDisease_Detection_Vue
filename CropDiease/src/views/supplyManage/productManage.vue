@@ -13,41 +13,80 @@
 
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="stats-row">
-      <el-col :xs="24" :sm="12" :md="8">
+      <el-col :xs="24" :sm="12" :md="4">
         <el-card class="stat-card">
           <div class="stat-content">
             <div class="stat-icon bg-blue">
               <el-icon><Goods /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ stats.totalProducts }}</div>
+              <div class="stat-value">{{ stats.totalCount }}</div>
               <div class="stat-label">商品总数</div>
             </div>
           </div>
         </el-card>
       </el-col>
-      <el-col :xs="24" :sm="12" :md="8">
+      <el-col :xs="24" :sm="12" :md="4">
         <el-card class="stat-card">
           <div class="stat-content">
             <div class="stat-icon bg-green">
               <el-icon><CircleCheck /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ stats.onSaleProducts }}</div>
+              <div class="stat-value">{{ stats.onSaleCount }}</div>
               <div class="stat-label">在售商品</div>
             </div>
           </div>
         </el-card>
       </el-col>
-      <el-col :xs="24" :sm="12" :md="8">
+      <el-col :xs="24" :sm="12" :md="4">
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon bg-orange">
+            <div class="stat-icon bg-gray">
+              <el-icon><CircleClose /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ stats.offSaleCount }}</div>
+              <div class="stat-label">下架商品</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="4">
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon bg-red">
               <el-icon><Warning /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ stats.lowStockProducts }}</div>
-              <div class="stat-label">库存不足</div>
+              <div class="stat-value">{{ stats.outOfStockCount }}</div>
+              <div class="stat-label">缺货商品</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="4">
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon bg-orange">
+              <el-icon><Bell /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ stats.lowStockCount }}</div>
+              <div class="stat-label">库存预警</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="4">
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon bg-purple">
+              <el-icon><Plus /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ stats.todayAddedCount }}</div>
+              <div class="stat-label">今日新增</div>
             </div>
           </div>
         </el-card>
@@ -89,7 +128,7 @@
         style="width: 100%"
       >
         <el-table-column type="index" width="50" align="center" />
-        <el-table-column label="商品信息" min-width="300">
+        <el-table-column label="商品信息" min-width="150">
           <template #default="{ row }">
             <div class="product-info-cell">
               <el-image
@@ -109,7 +148,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="价格" width="150" align="center">
+        <el-table-column label="价格" width="180" align="center">
           <template #default="{ row }">
             <div class="price-cell">
               <div class="current-price">¥{{ formatPrice(row.price) }}</div>
@@ -119,19 +158,19 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="库存" width="120" align="center">
+        <el-table-column label="库存" width="150" align="center">
           <template #default="{ row }">
             <div :class="['stock-cell', { 'stock-warning': row.stock < 10 }]">
               {{ row.stock }}{{ row.unit || '件' }}
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="销量" width="100" align="center">
+        <el-table-column label="销量" width="120" align="center">
           <template #default="{ row }">
             {{ row.salesCount || 0 }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column label="状态" width="120" align="center">
           <template #default="{ row }">
             <el-switch
               v-model="row.isOnSale"
@@ -141,7 +180,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" align="center" fixed="right">
+        <el-table-column label="操作" width="220" align="center" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleEdit(row)">
               <el-icon><Edit /></el-icon>编辑
@@ -277,15 +316,171 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 查看商品详情对话框 -->
+    <el-dialog
+      v-model="viewDialogVisible"
+      title="商品详情"
+      width="700px"
+      destroy-on-close
+    >
+      <div class="product-detail-view" v-if="currentProduct">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">商品ID：</span>
+              <span class="detail-value">{{ currentProduct.id }}</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">商品名称：</span>
+              <span class="detail-value">{{ currentProduct.productName }}</span>
+            </div>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" v-if="currentProduct.subTitle">
+          <el-col :span="24">
+            <div class="detail-item">
+              <span class="detail-label">副标题：</span>
+              <span class="detail-value">{{ currentProduct.subTitle }}</span>
+            </div>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">售价：</span>
+              <span class="detail-value price">¥{{ formatPrice(currentProduct.price) }}</span>
+            </div>
+          </el-col>
+          <el-col :span="12" v-if="currentProduct.originalPrice">
+            <div class="detail-item">
+              <span class="detail-label">原价：</span>
+              <span class="detail-value original-price">¥{{ formatPrice(currentProduct.originalPrice) }}</span>
+            </div>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">库存：</span>
+              <span class="detail-value" :class="{ 'stock-warning': currentProduct.stock < 10 }">
+                {{ currentProduct.stock }}{{ currentProduct.unit || '件' }}
+              </span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">销量：</span>
+              <span class="detail-value">{{ currentProduct.salesCount || 0 }}</span>
+            </div>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">单位：</span>
+              <span class="detail-value">{{ currentProduct.unit || '件' }}</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">评分：</span>
+              <span class="detail-value">
+                <el-rate :model-value="currentProduct.rating || 5" disabled show-score />
+              </span>
+            </div>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">产地：</span>
+              <span class="detail-value">{{ currentProduct.region || '-' }}</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">联系电话：</span>
+              <span class="detail-value">{{ currentProduct.phone || '-' }}</span>
+            </div>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">上架状态：</span>
+              <span class="detail-value">
+                <el-tag :type="currentProduct.isOnSale ? 'success' : 'info'">
+                  {{ currentProduct.isOnSale ? '已上架' : '已下架' }}
+                </el-tag>
+              </span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">商品标签：</span>
+              <span class="detail-value">
+                <el-tag v-if="currentProduct.isNew" size="small" type="success">新品</el-tag>
+                <el-tag v-if="currentProduct.isHot" size="small" type="danger">热销</el-tag>
+                <el-tag v-if="currentProduct.isRecommend" size="small" type="warning">推荐</el-tag>
+              </span>
+            </div>
+          </el-col>
+        </el-row>
+        <div class="detail-item" v-if="currentProduct.description">
+          <span class="detail-label">商品描述：</span>
+          <div class="detail-value description">{{ currentProduct.description }}</div>
+        </div>
+        <div class="detail-item" v-if="currentProduct.mainImage || currentProduct.images?.length">
+          <span class="detail-label">商品图片：</span>
+          <div class="detail-images">
+            <el-image
+              v-if="currentProduct.mainImage"
+              :src="currentProduct.mainImage"
+              :preview-src-list="[currentProduct.mainImage]"
+              fit="cover"
+              class="detail-image"
+            />
+            <el-image
+              v-for="(img, index) in currentProduct.images"
+              :key="index"
+              :src="img.imageUrl"
+              :preview-src-list="currentProduct.images.map(i => i.imageUrl)"
+              fit="cover"
+              class="detail-image"
+            />
+          </div>
+        </div>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">创建时间：</span>
+              <span class="detail-value">{{ formatDate(currentProduct.createdAt) }}</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="detail-item">
+              <span class="detail-label">更新时间：</span>
+              <span class="detail-value">{{ formatDate(currentProduct.updatedAt) }}</span>
+            </div>
+          </el-col>
+        </el-row>
+      </div>
+      <template #footer>
+        <el-button @click="viewDialogVisible = false">关闭</el-button>
+        <el-button type="primary" @click="handleEditFromView">编辑</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
-  Plus, Goods, CircleCheck, Search, Edit, View, Delete, Warning
+  Plus, Goods, CircleCheck, CircleClose, Search, Edit, View, Delete, Warning, Bell
 } from '@element-plus/icons-vue';
 // 使用供应商专用接口
 import {
@@ -295,16 +490,18 @@ import {
   updateSupplierProduct,
   deleteSupplierProduct,
   toggleSupplierProductStatus,
-  getCategories
+  getCategories,
+  getSupplierProductStatistics
 } from '/@/api/purchase';
-
-const router = useRouter();
 
 // 统计数据
 const stats = reactive({
-  totalProducts: 0,
-  onSaleProducts: 0,
-  lowStockProducts: 0
+  totalCount: 0,
+  onSaleCount: 0,
+  offSaleCount: 0,
+  outOfStockCount: 0,
+  lowStockCount: 0,
+  todayAddedCount: 0
 });
 
 // 商品列表
@@ -325,6 +522,10 @@ const isEdit = ref(false);
 const formRef = ref(null);
 const submitLoading = ref(false);
 const imageList = ref([]);
+
+// 查看详情对话框
+const viewDialogVisible = ref(false);
+const currentProduct = ref(null);
 
 const formData = reactive({
   id: null,
@@ -371,15 +572,24 @@ const loadProducts = async () => {
     if (res.code === 200) {
       productList.value = res.data.records;
       total.value = res.data.total;
-      stats.totalProducts = res.data.total;
-      stats.onSaleProducts = productList.value.filter(p => p.isOnSale).length;
-      stats.lowStockProducts = productList.value.filter(p => p.stock < 10).length;
     }
   } catch (error) {
     console.error('加载商品列表失败:', error);
     ElMessage.error('加载商品列表失败');
   } finally {
     loading.value = false;
+  }
+};
+
+// 加载统计信息
+const loadStatistics = async () => {
+  try {
+    const res = await getSupplierProductStatistics();
+    if (res.code === 200) {
+      Object.assign(stats, res.data);
+    }
+  } catch (error) {
+    console.error('加载统计信息失败:', error);
   }
 };
 
@@ -431,8 +641,30 @@ const handleEdit = (row) => {
 };
 
 // 查看商品
-const handleView = (row) => {
-  router.push(`/product/${row.id}`);
+const handleView = async (row) => {
+  try {
+    const res = await getSupplierProductDetail(row.id);
+    if (res.code === 200) {
+      currentProduct.value = res.data;
+      viewDialogVisible.value = true;
+    }
+  } catch (error) {
+    console.error('获取商品详情失败:', error);
+    ElMessage.error('获取商品详情失败');
+  }
+};
+
+// 从查看弹窗点击编辑
+const handleEditFromView = () => {
+  viewDialogVisible.value = false;
+  handleEdit(currentProduct.value);
+};
+
+// 格式化日期
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleString('zh-CN');
 };
 
 // 删除商品
@@ -543,6 +775,7 @@ const resetForm = () => {
 onMounted(() => {
   loadCategories();
   loadProducts();
+  loadStatistics();
 });
 </script>
 
@@ -595,6 +828,18 @@ onMounted(() => {
 
         &.bg-orange {
           background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        &.bg-gray {
+          background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);
+        }
+
+        &.bg-red {
+          background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        &.bg-purple {
+          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
       }
 
@@ -691,6 +936,68 @@ onMounted(() => {
   .el-upload--picture-card {
     width: 100px;
     height: 100px;
+  }
+}
+
+// 商品详情查看样式
+.product-detail-view {
+  padding: 10px;
+
+  .detail-item {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: flex-start;
+
+    .detail-label {
+      color: #606266;
+      font-weight: 500;
+      min-width: 80px;
+      flex-shrink: 0;
+    }
+
+    .detail-value {
+      color: #303133;
+      flex: 1;
+
+      &.price {
+        color: #f56c6c;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      &.original-price {
+        color: #909399;
+        text-decoration: line-through;
+      }
+
+      &.stock-warning {
+        color: #f56c6c;
+        font-weight: 600;
+      }
+
+      &.description {
+        line-height: 1.6;
+        padding: 10px;
+        background: #f5f7fa;
+        border-radius: 4px;
+        margin-top: 5px;
+      }
+    }
+  }
+
+  .detail-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+
+    .detail-image {
+      width: 120px;
+      height: 120px;
+      border-radius: 4px;
+      border: 1px solid #e4e7ed;
+      cursor: pointer;
+    }
   }
 }
 </style>

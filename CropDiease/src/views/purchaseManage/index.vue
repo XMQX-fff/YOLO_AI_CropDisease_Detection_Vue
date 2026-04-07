@@ -31,32 +31,6 @@
       </div>
     </div>
 
-    <!-- 分类导航 -->
-    <div class="category-section">
-      <div class="category-list">
-        <div
-          class="category-item"
-          :class="{ active: selectedCategory === null }"
-          @click="selectCategory(null)"
-        >
-          <el-icon><Grid /></el-icon>
-          <span>全部商品</span>
-        </div>
-        <div
-          v-for="category in categoryList"
-          :key="category.id"
-          class="category-item"
-          :class="{ active: selectedCategory === category.id }"
-          @click="selectCategory(category.id)"
-        >
-          <el-icon v-if="category.icon">
-            <component :is="category.icon" />
-          </el-icon>
-          <span>{{ category.name }}</span>
-        </div>
-      </div>
-    </div>
-
     <!-- 轮播Banner -->
     <div class="banner-section">
       <el-carousel height="300px" indicator-position="outside">
@@ -69,14 +43,41 @@
                 立即查看
               </el-button>
             </div>
-            <img :src="banner.image" :alt="banner.title" class="banner-image" />
+            <div class="banner-image-wrapper">
+              <img :src="banner.image" :alt="banner.title" class="banner-image" />
+              <div class="banner-image-overlay"></div>
+            </div>
           </div>
         </el-carousel-item>
       </el-carousel>
     </div>
 
-    <!-- 推荐商品区域 -->
-    <div class="section recommend-section">
+    <!-- 分类选择区域 -->
+    <div class="category-section">
+      <div class="category-list">
+        <div
+          class="category-item"
+          :class="{ active: selectedCategory === null }"
+          @click="selectCategory(null)"
+        >
+          <el-icon><Grid /></el-icon>
+          <span>全部</span>
+        </div>
+        <div
+          v-for="category in categoryList"
+          :key="category.id"
+          class="category-item"
+          :class="{ active: selectedCategory === category.id }"
+          @click="selectCategory(category.id)"
+        >
+          <img v-if="category.icon" :src="category.icon" class="category-icon" />
+          <span>{{ category.name }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 推荐商品区域（仅在未选择分类时显示） -->
+    <div class="section recommend-section" v-if="!selectedCategory">
       <div class="section-header">
         <h3>
           <el-icon><StarFilled /></el-icon>
@@ -91,8 +92,8 @@
       </el-row>
     </div>
 
-    <!-- 热销商品区域 -->
-    <div class="section hot-section">
+    <!-- 热销商品区域（仅在未选择分类时显示） -->
+    <div class="section hot-section" v-if="!selectedCategory">
       <div class="section-header">
         <h3>
           <el-icon><TrendCharts /></el-icon>
@@ -187,21 +188,21 @@ const banners = ref([
   {
     title: '春季农资大促',
     subtitle: '全场农资商品8折起，满500免运费',
-    image: '/images/banner1.jpg',
+    image: 'https://haowallpaper.com/link/common/file/previewFileImg/2f8118b413aa11611bdb77553c8a5f952f8118b413aa11611bdb77553c8a5f95',
     bgColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     link: '/promotion/spring'
   },
   {
     title: '优质种子精选',
     subtitle: '高产抗病品种，丰收有保障',
-    image: '/images/banner2.jpg',
+    image: 'https://haowallpaper.com/link/common/file/previewFileImg/18375393205013888',
     bgColor: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
     link: '/category/seeds'
   },
   {
     title: '智能农机设备',
     subtitle: '现代农业必备，提高效率降低成本',
-    image: '/images/banner3.jpg',
+    image: 'https://haowallpaper.com/link/common/file/previewFileImg/18352668147764608',
     bgColor: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
     link: '/category/machinery'
   }
@@ -415,6 +416,7 @@ onMounted(() => {
   }
 }
 
+// 分类选择区域（轮播图下方）
 .category-section {
   background: #fff;
   padding: 20px;
@@ -442,6 +444,14 @@ onMounted(() => {
         font-size: 28px;
         margin-bottom: 8px;
         color: #606266;
+      }
+
+      .category-icon {
+        width: 28px;
+        height: 28px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        object-fit: cover;
       }
 
       span {
@@ -480,12 +490,15 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 60px;
+    padding: 0 0 0 60px;
     height: 100%;
+    position: relative;
 
     .banner-content {
       color: #fff;
-      max-width: 400px;
+      max-width: 33%;
+      flex-shrink: 0;
+      z-index: 2;
 
       h2 {
         font-size: 36px;
@@ -500,9 +513,31 @@ onMounted(() => {
       }
     }
 
-    .banner-image {
-      height: 80%;
-      object-fit: contain;
+    .banner-image-wrapper {
+      position: relative;
+      width: 66.67%;
+      height: 100%;
+      overflow: hidden;
+
+      .banner-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .banner-image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 60%;
+        height: 100%;
+        background: linear-gradient(to right, 
+          rgba(255, 255, 255, 0.4) 0%, 
+          rgba(255, 255, 255, 0.1) 40%, 
+          transparent 100%
+        );
+        pointer-events: none;
+      }
     }
   }
 }

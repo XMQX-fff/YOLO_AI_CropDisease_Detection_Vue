@@ -40,7 +40,7 @@ const fetchGreenhouseData = async () => {
       pageNum: currentPage.value,
       pageSize: pageSize.value
     })
-    if (res.code === '0' || res.code === 0) {
+    if (res.code === '0' || res.code === 0 || res.code === 200) {
       const data = res.data.records || res.data.list || res.data
       total.value = res.data.total || data.length
       

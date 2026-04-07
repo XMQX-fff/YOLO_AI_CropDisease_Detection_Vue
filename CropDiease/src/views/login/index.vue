@@ -64,6 +64,8 @@ const submitForm = async (formEl: FormInstance | undefined) => {
             localStorage.setItem('userInfo', JSON.stringify(res.data.user));
             Session.set('token', res.data.token);
             Session.set('tokenType', res.data.tokenType || 'Bearer');
+            // 触发自定义事件通知 App.vue 更新用户信息
+            window.dispatchEvent(new CustomEvent('userInfoUpdated', { detail: res.data.user }));
           }
           
           // 登录成功后跳转到首页

@@ -26,7 +26,7 @@
         <el-table-column label="分类名称" min-width="200">
           <template #default="{ row }">
             <div class="category-name-cell">
-              <el-icon v-if="row.icon"><component :is="row.icon" /></el-icon>
+              <img v-if="row.icon" :src="row.icon" class="category-icon" />
               <span>{{ row.name }}</span>
             </div>
           </template>
@@ -330,6 +330,13 @@ onMounted(() => {
   .el-icon {
     font-size: 18px;
     color: #409eff;
+  }
+
+  .category-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: cover;
+    border-radius: 4px;
   }
 }
 </style>

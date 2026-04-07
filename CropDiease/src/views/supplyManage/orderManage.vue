@@ -99,25 +99,42 @@
         style="width: 100%"
       >
         <el-table-column prop="orderNo" label="订单编号" width="180" />
-        <el-table-column label="商品信息" min-width="250">
+        <el-table-column label="商品信息" min-width="200">
           <template #default="{ row }">
-            <div v-for="item in row.orderItems" :key="item.id" class="order-item">
-              <span class="item-name">{{ item.productName }}</span>
-              <span class="item-quantity">x{{ item.quantity }}</span>
+            <div v-if="row.orderItems && row.orderItems.length > 0">
+              <div v-for="item in row.orderItems" :key="item.id" class="order-item">
+                <span class="item-name">{{ item.productName }}</span>
+                <span class="item-quantity">x{{ item.quantity }}</span>
+              </div>
             </div>
+            <div v-else class="no-items">暂无商品详情</div>
           </template>
         </el-table-column>
         <el-table-column label="收货信息" min-width="200">
           <template #default="{ row }">
             <div class="receiver-info">
-              <div>{{ row.receiverName }} {{ row.receiverPhone }}</div>
-              <div class="address">{{ row.province }}{{ row.city }}{{ row.district }}</div>
+              <div v-if="row.receiverName && row.receiverPhone">
+                {{ row.receiverName }} {{ row.receiverPhone }}
+              </div>
+              <div v-else-if="row.user && row.user.phone">
+                {{ row.user.nickname || row.user.username }} {{ row.user.phone }}
+              </div>
+              <div v-else class="no-info">暂无联系人信息</div>
+              <div class="address" v-if="row.province || row.city || row.district">
+                {{ row.province }}{{ row.city }}{{ row.district }}
+              </div>
+              <div class="address" v-else-if="row.address">
+                {{ row.address }}
+              </div>
+              <div v-else class="no-info">暂无地址信息</div>
             </div>
           </template>
         </el-table-column>
         <el-table-column label="金额" width="120" align="center">
           <template #default="{ row }">
-            <div class="order-amount">¥{{ formatPrice(row.payAmount) }}</div>
+            <div class="order-amount">
+              ¥{{ formatPrice(row.payAmount || row.totalPrice) }}
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="状态" width="100" align="center">
@@ -207,7 +224,7 @@
 
         <div class="detail-section">
           <h4>商品信息</h4>
-          <el-table :data="currentOrder.orderItems" border size="small">
+          <el-table v-if="currentOrder.orderItems && currentOrder.orderItems.length > 0" :data="currentOrder.orderItems" border size="small">
             <el-table-column prop="productName" label="商品名称" />
             <el-table-column prop="quantity" label="数量" width="80" align="center" />
             <el-table-column label="单价" width="100" align="center">
@@ -221,15 +238,26 @@
               </template>
             </el-table-column>
           </el-table>
+          <el-empty v-else description="暂无商品详情" />
         </div>
 
         <div class="detail-section">
           <h4>收货信息</h4>
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="收货人">{{ currentOrder.receiverName }}</el-descriptions-item>
-            <el-descriptions-item label="联系电话">{{ currentOrder.receiverPhone }}</el-descriptions-item>
+            <el-descriptions-item label="收货人">
+              {{ currentOrder.receiverName || (currentOrder.user?.nickname || currentOrder.user?.username) || '-' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="联系电话">
+              {{ currentOrder.receiverPhone || currentOrder.user?.phone || '-' }}
+            </el-descriptions-item>
             <el-descriptions-item label="收货地址">
-              {{ currentOrder.province }}{{ currentOrder.city }}{{ currentOrder.district }}{{ currentOrder.detailAddress }}
+              <span v-if="currentOrder.province || currentOrder.city || currentOrder.district">
+                {{ currentOrder.province }}{{ currentOrder.city }}{{ currentOrder.district }}{{ currentOrder.detailAddress || '' }}
+              </span>
+              <span v-else-if="currentOrder.address">
+                {{ currentOrder.address }}
+              </span>
+              <span v-else>-</span>
             </el-descriptions-item>
           </el-descriptions>
         </div>
@@ -253,13 +281,13 @@
               <span>运费：</span>
               <span>¥{{ formatPrice(currentOrder.deliveryFee) }}</span>
             </div>
-            <div class="amount-item" v-if="currentOrder.discountAmount">
+            <div class="amount-item" v-if="currentOrder.discountAmount && currentOrder.discountAmount > 0">
               <span>优惠金额：</span>
               <span>-¥{{ formatPrice(currentOrder.discountAmount) }}</span>
             </div>
             <div class="amount-item total">
               <span>实付金额：</span>
-              <span class="total-price">¥{{ formatPrice(currentOrder.payAmount) }}</span>
+              <span class="total-price">¥{{ formatPrice(currentOrder.payAmount || currentOrder.totalPrice) }}</span>
             </div>
           </div>
         </div>
@@ -546,6 +574,20 @@ onMounted(() => {
     color: #909399;
     margin-top: 5px;
   }
+
+  .no-info {
+    font-size: 12px;
+    color: #c0c4cc;
+    font-style: italic;
+  }
+}
+
+.no-items {
+  font-size: 12px;
+  color: #c0c4cc;
+  font-style: italic;
+  text-align: center;
+  padding: 10px 0;
 }
 
 .order-amount {

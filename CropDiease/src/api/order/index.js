@@ -3,7 +3,7 @@ import request from '/@/utils/request'
 // 创建订单
 export function createOrder(userId, addressId, remark, buyerMessage) {
   return request({
-    url: '/order',
+    url: '/api/order',
     method: 'post',
     params: { userId, addressId, remark, buyerMessage }
   })
@@ -12,7 +12,7 @@ export function createOrder(userId, addressId, remark, buyerMessage) {
 // 获取订单详情
 export function getOrderDetail(orderId) {
   return request({
-    url: `/order/${orderId}`,
+    url: `/api/order/${orderId}`,
     method: 'get'
   })
 }
@@ -20,7 +20,7 @@ export function getOrderDetail(orderId) {
 // 获取用户订单列表
 export function getOrderList(userId) {
   return request({
-    url: '/order/list',
+    url: '/api/order/list',
     method: 'get',
     params: { userId }
   })
@@ -29,7 +29,7 @@ export function getOrderList(userId) {
 // 分页获取订单
 export function getOrderPage(userId, pageNum = 1, pageSize = 10, status) {
   return request({
-    url: '/order/page',
+    url: '/api/order/page',
     method: 'get',
     params: { userId, pageNum, pageSize, status }
   })
@@ -38,7 +38,7 @@ export function getOrderPage(userId, pageNum = 1, pageSize = 10, status) {
 // 支付订单
 export function payOrder(orderId, payMethod) {
   return request({
-    url: `/order/${orderId}/pay`,
+    url: `/api/order/${orderId}/pay`,
     method: 'put',
     params: { payMethod }
   })
@@ -47,7 +47,7 @@ export function payOrder(orderId, payMethod) {
 // 发货
 export function shipOrder(orderId, trackingNo, logisticsCompany) {
   return request({
-    url: `/order/${orderId}/ship`,
+    url: `/api/order/${orderId}/ship`,
     method: 'put',
     params: { trackingNo, logisticsCompany }
   })
@@ -56,7 +56,7 @@ export function shipOrder(orderId, trackingNo, logisticsCompany) {
 // 确认收货
 export function confirmOrder(orderId) {
   return request({
-    url: `/order/${orderId}/confirm`,
+    url: `/api/order/${orderId}/confirm`,
     method: 'put'
   })
 }
@@ -64,7 +64,7 @@ export function confirmOrder(orderId) {
 // 取消订单
 export function cancelOrder(orderId, cancelReason) {
   return request({
-    url: `/order/${orderId}/cancel`,
+    url: `/api/order/${orderId}/cancel`,
     method: 'put',
     params: { cancelReason }
   })
@@ -73,7 +73,7 @@ export function cancelOrder(orderId, cancelReason) {
 // 删除订单
 export function deleteOrder(orderId) {
   return request({
-    url: `/order/${orderId}`,
+    url: `/api/order/${orderId}`,
     method: 'delete'
   })
 }
@@ -81,7 +81,7 @@ export function deleteOrder(orderId) {
 // 根据订单号查询
 export function getOrderByOrderNo(orderNo) {
   return request({
-    url: '/order/byOrderNo',
+    url: '/api/order/byOrderNo',
     method: 'get',
     params: { orderNo }
   })
