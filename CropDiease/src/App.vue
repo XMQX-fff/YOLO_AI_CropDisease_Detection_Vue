@@ -118,7 +118,7 @@ const navMenu = [
     name: '智能温室',
     children: [
       { path: '/infoGreenhouse', name: '温室管理' },
-      { path: '/infoGreenhouse/overview', name: '总览大屏' },
+      { path: '/infoGreenhouse/overview', name: '总览大屏', requireAdmin: true },
       { path: '/detailsEnv', name: '环境监测' },
       { path: '/infoGreenhouse/device', name: '设备控制' },
       { path: '/infoGreenhouse/analysis', name: '数据分析' },
@@ -130,7 +130,7 @@ const navMenu = [
     path: '/infoDisease',
     name: '病虫害检测',
     children: [
-      { path: '/infoDisease', name: '病虫害数据库' },
+      { path: '/infoDisease', name: '病虫害数据库', requireAdmin: true },
       { path: '/imgPredict', name: '图像预测' },
       { path: '/videoPredict', name: '视频预测' },
       { path: '/cameraPredict', name: '摄像头预测' },
@@ -252,6 +252,21 @@ const filteredNavMenu = computed(() => {
     if (item.requireAdminOrSupplier) {
       return false; // 不是管理员也不是供应商，不显示
     }
+    
+    // 检查子菜单权限：如果所有子菜单都需要管理员权限，则父菜单不显示
+    if (item.children) {
+      const visibleChildren = item.children.filter((child: any) => {
+        if (child.requireAdmin) {
+          return isAdmin.value;
+        }
+        return true;
+      });
+      // 如果过滤后没有可见子菜单，则不显示该父菜单
+      if (visibleChildren.length === 0) {
+        return false;
+      }
+    }
+    
     return true;
   });
 });
@@ -299,14 +314,14 @@ watch(
   }
 );
 
-// 判断是否是登录页面
+// 判断是否是登录或注册页面（这些页面不显示菜单栏）
 const isLoginPage = computed(() => {
-  return route.path === '/login';
+  return route.path === '/login' || route.path === '/register';
 });
 
-// 判断是否是数据大屏页面或首页
+// 判断是否是数据大屏页面或首页或知识库问答页面或文档管理或用户管理或个人中心（这些页面不显示左侧二级菜单）
 const isDataViewPage = computed(() => {
-  return route.path === '/dataView' || route.path === '/';
+  return route.path === '/dataView' || route.path === '/' || route.path === '/knowledgeChat' || route.path === '/documentManage' || route.path === '/userManage' || route.path === '/personal';
 });
 
 // 判断是否是农资采购页面

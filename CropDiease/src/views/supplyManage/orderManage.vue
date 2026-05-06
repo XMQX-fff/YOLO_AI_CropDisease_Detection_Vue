@@ -303,7 +303,7 @@ import { ElMessage } from 'element-plus';
 import {
   ShoppingCart, Wallet, Box, Money, Search
 } from '@element-plus/icons-vue';
-import { getOrderPage, shipOrder } from '/@/api/order';
+import { getSupplierOrderPage, supplierShipOrder } from '/@/api/purchase';
 
 const router = useRouter();
 
@@ -377,11 +377,8 @@ const getOrderStatusText = (status) => {
 const loadOrders = async () => {
   loading.value = true;
   try {
-    const userInfoStr = localStorage.getItem('userInfo');
-    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
-    const userId = userInfo?.id || userInfo?.userId;
-
-    const res = await getOrderPage(userId, pageNum.value, pageSize.value, orderStatus.value);
+    // 使用供应商订单接口，查询包含当前供应商商品的订单
+    const res = await getSupplierOrderPage(pageNum.value, pageSize.value, orderStatus.value);
     if (res.code === 200) {
       orderList.value = res.data.records;
       total.value = res.data.total;
@@ -436,7 +433,8 @@ const handleShipSubmit = async () => {
 
   shipLoading.value = true;
   try {
-    const res = await shipOrder(currentOrder.value.id, shipForm.trackingNo, shipForm.logisticsCompany);
+    // 使用供应商发货接口
+    const res = await supplierShipOrder(currentOrder.value.id, shipForm.trackingNo, shipForm.logisticsCompany);
     if (res.code === 200) {
       ElMessage.success('发货成功');
       shipDialogVisible.value = false;

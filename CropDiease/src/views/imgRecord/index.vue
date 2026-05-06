@@ -99,14 +99,24 @@ const getTableData = () => {
 	state.tableData.loading = true;
 	recordApi.getImgRecordList(state.tableData.param)
 		.then((res) => {
-			if (res.code == 0) {
+			if (res.code == 0 || res.code == 200 || res.code == '200') {
 				state.tableData.data = [];
 				setTimeout(() => {
 					state.tableData.loading = false;
 				}, 500);
 				for (let i = 0; i < res.data.records.length; i++) {
-					const confidences = JSON.parse(res.data.records[i].confidence);
-					const labels = JSON.parse(res.data.records[i].label);
+					let confidences = [];
+					let labels = [];
+					try {
+						confidences = JSON.parse(res.data.records[i].confidence);
+					} catch (e) {
+						confidences = [res.data.records[i].confidence];
+					}
+					try {
+						labels = JSON.parse(res.data.records[i].label);
+					} catch (e) {
+						labels = [res.data.records[i].label];
+					}
 					const transformedData = transformData(res.data.records[i], confidences, labels);
 					transformedData["num"] = i + 1;
 					state.tableData.data[i] = transformedData

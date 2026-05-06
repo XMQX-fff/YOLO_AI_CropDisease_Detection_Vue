@@ -22,7 +22,8 @@
             <el-slider v-model="conf" :format-tooltip="formatTooltip" style="width: 280px; margin-left: 16px;" />
           </div>
           <el-upload v-model="state.form.inputVideo" ref="uploadFile" class="avatar-uploader"
-            action="http://localhost:9999/files/upload" :show-file-list="false"
+            action="#" :show-file-list="false"
+            :http-request="customUpload"
             :on-success="handleAvatarSuccessone">
             <div class="button-section" style="margin-left: 16px">
               <el-button type="info">上传视频</el-button>
@@ -62,6 +63,7 @@ import type { UploadInstance, UploadProps } from 'element-plus';
 import { SocketService } from '/@/utils/socket';
 import { formatDate } from '/@/utils/formatTime';
 import { VideoCamera } from '@element-plus/icons-vue';
+import { Session } from '/@/utils/storage';
 
 // 导入API
 import { usePredictApi } from '/@/api/predict';
@@ -75,6 +77,32 @@ const weight = ref('');
 const handleAvatarSuccessone: UploadProps['onSuccess'] = (response, uploadFile) => {
 	ElMessage.success('上传成功！');
 	state.form.inputVideo = response.data;
+};
+
+// 自定义上传方法，使用request拦截器携带token
+const customUpload = async (options: any) => {
+	const { file, onSuccess, onError } = options;
+	const formData = new FormData();
+	formData.append('file', file);
+	
+	try {
+		const response = await request({
+			url: '/api/files/upload',
+			method: 'post',
+			data: formData,
+			headers: {
+				'Content-Type': 'multipart/form-data'
+			}
+		});
+		
+		if (response.code === 200 || response.code === '200' || response.code === 0) {
+			onSuccess(response);
+		} else {
+			onError(new Error(response.msg || '上传失败'));
+		}
+	} catch (error) {
+		onError(error);
+	}
 };
 const state = reactive({
 	weight_items: [] as any,
@@ -127,7 +155,8 @@ const state = reactive({
 		weight: '',
 		conf: null as any,
 		kind: '',
-		startTime: ''
+		startTime: '',
+		userId: ''
 	},
 });
 
@@ -159,12 +188,15 @@ socketService.on('progress', (data) => {
 
 const getData = () => {
 	predictApi.getFileNames().then((res) => {
-		if (res.code == 0) {
-			res.data = JSON.parse(res.data);
-			state.weight_items = res.data.weight_items.filter(item => item.value.includes(kind.value));
+		if (res.code == 0 || res.code == 200 || res.code == '200') {
+			const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+			state.weight_items = data.weight_items.filter(item => item.value.includes(kind.value));
 		} else {
-			ElMessage.error(res.msg);
+			ElMessage.error(res.msg || res.message || '获取模型列表失败');
 		}
+	}).catch((error) => {
+		console.error('获取模型列表失败:', error);
+		ElMessage.error('获取模型列表失败');
 	});
 };
 
@@ -192,6 +224,9 @@ const upData = () => {
 	state.form.username = 'admin'; // 暂时使用默认值
 	state.form.kind = kind.value;
 	state.form.startTime = formatDate(new Date(), 'YYYY-mm-dd HH:MM:SS');
+	// 添加userId
+	const userInfo = Session.get('userInfo');
+	state.form.userId = userInfo?.id || '';
 	console.log(state.form);
 	const queryParams = new URLSearchParams(state.form).toString();
 	state.video_path = `http://127.0.0.1:5000/predictVideo?${queryParams}`;

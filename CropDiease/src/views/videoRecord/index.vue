@@ -108,7 +108,7 @@ const getTableData = () => {
 	state.tableData.loading = true;
 	recordApi.getVideoRecordList(state.tableData.param)
 		.then((res) => {
-			if (res.code == 0) {
+			if (res.code == 0 || res.code == 200 || res.code == '200') {
 				state.tableData.data = [];
 				setTimeout(() => {
 					state.tableData.loading = false;

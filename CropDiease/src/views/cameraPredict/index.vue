@@ -57,6 +57,7 @@ import request from '/@/utils/request';
 import type { UploadInstance, UploadProps } from 'element-plus';
 import { SocketService } from '/@/utils/socket';
 import { Camera } from '@element-plus/icons-vue';
+import { Session } from '/@/utils/storage';
 
 // 导入API
 import { usePredictApi } from '/@/api/predict';
@@ -118,7 +119,8 @@ const state = reactive({
 		weight: '',
 		conf: null as any,
 		kind: '',
-		startTime: ''
+		startTime: '',
+		userId: ''
 	},
 });
 
@@ -150,7 +152,7 @@ socketService.on('progress', (data) => {
 
 const getData = () => {
 	predictApi.getFileNames().then((res) => {
-		if (res.code == 0) {
+		if (res.code == 0 || res.code == 200 || res.code == '200') {
 			res.data = JSON.parse(res.data);
 			state.weight_items = res.data.weight_items.filter(item => item.value.includes(kind.value));
 		} else {
@@ -179,6 +181,9 @@ const start = () => {
 	state.form.conf = conf.value / 100;
 	state.form.username = 'admin'; // 暂时使用默认值
 	state.form.startTime = formatDate(new Date(), 'YYYY-mm-dd HH:MM:SS');
+	// 添加userId
+	const userInfo = Session.get('userInfo');
+	state.form.userId = userInfo?.id || '';
 	console.log(state.form);
 	const queryParams = new URLSearchParams(state.form).toString();
 	state.cameraisShow = true

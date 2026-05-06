@@ -238,7 +238,7 @@ const resetForm = (formEl: FormInstance | undefined) => {
             </div>
             
             <div class="register-link">
-              还没有账户? <a href="#">立即注册</a>
+              还没有账户? <router-link to="/register">立即注册</router-link>
             </div>
           </div>
         </div>

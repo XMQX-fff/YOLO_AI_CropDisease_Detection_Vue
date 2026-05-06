@@ -35,8 +35,8 @@
           <div class="image-card">
             <h3 class="card-title">原图片</h3>
             <el-upload v-model="state.img" ref="uploadFile" class="avatar-uploader" 
-              action="http://localhost:9999/files/upload" :show-file-list="false" 
-              :on-success="handleAvatarSuccessone">
+              action="#" :show-file-list="false" 
+              :http-request="customUpload">
               <div class="upload-area" @click.stop="triggerFileUpload">
                 <el-image v-if="imageUrl" :src="imageUrl" class="preview-image" fit="contain" />
                 <div v-else class="upload-placeholder"> 
@@ -128,6 +128,7 @@ import request from '/@/utils/request';
 import { Plus, ChatLineRound, Picture } from '@element-plus/icons-vue';
 import { formatDate } from '/@/utils/formatTime';
 import axios from 'axios';
+import { Session } from '/@/utils/storage';
 
 import { usePredictApi } from '/@/api/predict';
 import { useRecordApi } from '/@/api/record';
@@ -196,7 +197,8 @@ const state = reactive({
 		weight: '',
 		conf: null as any,
 		kind: '',
-		startTime: ''
+		startTime: '',
+		token: ''
 	},
 	aiSuggestion: '',
 	suggestionLoading: false,
@@ -226,19 +228,51 @@ function renderMarkdown(text) {
   return text;
 }
 
-const handleAvatarSuccessone: UploadProps['onSuccess'] = (response, uploadFile) => {
-	imageUrl.value = URL.createObjectURL(uploadFile.raw!);
-	state.img = response.data;
+// 自定义上传方法，使用request拦截器携带token
+const customUpload = async (options: any) => {
+	const { file, onProgress, onError } = options;
+	const formData = new FormData();
+	formData.append('file', file);
+	
+	try {
+		const response = await request({
+			url: '/api/files/upload',
+			method: 'post',
+			data: formData,
+			headers: {
+				'Content-Type': 'multipart/form-data'
+			}
+		});
+		
+		console.log('上传响应:', response);
+		// request拦截器返回的是响应对象，包含code/data/message等字段
+		if (response && response.code === 200) {
+			// 直接处理上传成功逻辑，不再调用onSuccess避免重复触发
+			imageUrl.value = URL.createObjectURL(file);
+			state.img = response.data;
+			ElMessage.success('上传成功');
+		} else {
+			ElMessage.error(response?.message || '上传失败');
+			onError(new Error(response?.message || '上传失败'));
+		}
+	} catch (error) {
+		console.error('上传错误:', error);
+		ElMessage.error('上传失败');
+		onError(error);
+	}
 };
 
 const getData = () => {
 	predictApi.getFileNames().then((res) => {
-		if (res.code == 0) {
-			res.data = JSON.parse(res.data);
-			state.weight_items = res.data.weight_items.filter(item => item.value.includes(kind.value));
+		if (res.code == 0 || res.code == 200 || res.code == '200') {
+			const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+			state.weight_items = data.weight_items.filter(item => item.value.includes(kind.value));
 		} else {
-			ElMessage.error(res.msg);
+			ElMessage.error(res.msg || res.message || '获取模型列表失败');
 		}
+	}).catch((error) => {
+		console.error('获取模型列表失败:', error);
+		ElMessage.error('获取模型列表失败');
 	});
 };
 
@@ -267,9 +301,13 @@ const upData = () => {
 	state.form.inputImg = state.img;
 	state.form.kind = kind.value;
 	state.form.startTime = formatDate(new Date(), 'YYYY-mm-dd HH:MM:SS');
+	// 添加token，供Flask后端下载图片使用
+	const token = Session.get('token');
+	const tokenType = Session.get('tokenType') || 'Bearer';
+	state.form.token = token ? `${tokenType} ${token}` : '';
 	console.log(state.form);
 	predictApi.imgPredict(state.form).then((res) => {
-		if (res.code == 0) {
+		if (res.code == 0 || res.code == 200 || res.code == '200') {
 			const originalImage = imageUrl.value;
 			try {
 				res.data = JSON.parse(res.data);

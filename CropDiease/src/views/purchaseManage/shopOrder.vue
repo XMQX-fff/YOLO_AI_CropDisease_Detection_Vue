@@ -246,8 +246,9 @@
       <el-dialog
         v-model="payDialogVisible"
         title="订单支付"
-        width="400px"
+        width="450px"
         destroy-on-close
+        :close-on-click-modal="false"
       >
         <div class="pay-content">
           <div class="pay-amount">
@@ -256,21 +257,56 @@
           </div>
           <div class="pay-methods">
             <h4>选择支付方式</h4>
-            <el-radio-group v-model="payMethod">
-              <el-radio label="alipay">
-                <div class="pay-method-item">
-                  <el-icon><Wallet /></el-icon>
-                  <span>支付宝</span>
+            <el-radio-group v-model="payMethod" class="pay-method-group">
+              <el-radio label="alipay" class="pay-method-radio">
+                <div class="pay-method-item alipay">
+                  <div class="method-icon">
+                    <el-icon :size="24" color="#1677FF"><Wallet /></el-icon>
+                  </div>
+                  <div class="method-info">
+                    <span class="method-name">支付宝</span>
+                    <span class="method-desc">推荐使用支付宝沙箱环境</span>
+                  </div>
+                  <el-tag size="small" type="success" class="method-tag">推荐</el-tag>
                 </div>
               </el-radio>
-              <el-radio label="wechat">
-                <div class="pay-method-item">
-                  <el-icon><ChatDotRound /></el-icon>
-                  <span>微信支付</span>
+              <el-radio label="wechat" class="pay-method-radio" disabled>
+                <div class="pay-method-item wechat">
+                  <div class="method-icon">
+                    <el-icon :size="24" color="#07C160"><ChatDotRound /></el-icon>
+                  </div>
+                  <div class="method-info">
+                    <span class="method-name">微信支付</span>
+                    <span class="method-desc">暂不支持</span>
+                  </div>
+                  <el-tag size="small" type="info" class="method-tag">暂未开通</el-tag>
                 </div>
               </el-radio>
             </el-radio-group>
           </div>
+
+          <!-- 支付宝沙箱帮助提示 -->
+          <el-alert
+            v-if="payMethod === 'alipay'"
+            type="info"
+            :closable="false"
+            class="alipay-tips"
+          >
+            <template #title>
+              <div class="tips-title">
+                <el-icon><InfoFilled /></el-icon>
+                <span>支付宝沙箱支付说明</span>
+                <el-button link type="primary" size="small" @click="showAlipayHelp">
+                  查看测试账号
+                </el-button>
+              </div>
+            </template>
+            <div class="tips-content">
+              <p>1. 点击支付后将跳转到支付宝沙箱登录页</p>
+              <p>2. 使用测试账号登录并完成支付</p>
+              <p>3. 支付完成后将自动返回订单页面</p>
+            </div>
+          </el-alert>
         </div>
         <template #footer>
           <el-button @click="payDialogVisible = false">取消</el-button>
@@ -279,17 +315,69 @@
           </el-button>
         </template>
       </el-dialog>
+
+      <!-- 支付宝支付帮助对话框 -->
+      <el-dialog
+        v-model="alipayHelpVisible"
+        title="支付宝沙箱支付帮助"
+        width="500px"
+      >
+        <div class="alipay-help-content">
+          <el-alert type="warning" :closable="false" style="margin-bottom: 15px">
+            <p>以下账号为支付宝官方提供的沙箱测试账号，仅用于测试环境</p>
+          </el-alert>
+
+          <h4>买家测试账号</h4>
+          <el-descriptions :column="1" border class="account-info">
+            <el-descriptions-item label="账号">yjqjmv5373@sandbox.com</el-descriptions-item>
+            <el-descriptions-item label="登录密码">111111</el-descriptions-item>
+            <el-descriptions-item label="支付密码">111111</el-descriptions-item>
+          </el-descriptions>
+
+          <h4 style="margin-top: 20px">支付流程</h4>
+          <el-steps direction="vertical" :active="3" class="pay-steps">
+            <el-step title="点击支付" description="在订单页面点击立即支付按钮" />
+            <el-step title="登录沙箱" description="使用上述测试账号登录支付宝沙箱" />
+            <el-step title="确认支付" description="确认支付金额并输入支付密码" />
+            <el-step title="完成支付" description="支付成功后自动返回订单页面" />
+          </el-steps>
+
+          <el-alert type="info" :closable="false" style="margin-top: 15px">
+            <p>提示：沙箱环境支付不会扣除真实资金，仅用于功能测试</p>
+          </el-alert>
+        </div>
+      </el-dialog>
+
+      <!-- 支付加载对话框 -->
+      <el-dialog
+        v-model="payLoadingVisible"
+        title="正在发起支付"
+        width="400px"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        :show-close="false"
+      >
+        <div class="pay-loading-content">
+          <el-icon class="loading-icon" :size="48"><Loading /></el-icon>
+          <p class="loading-text">正在连接支付宝沙箱环境...</p>
+          <p class="loading-tips">请在新打开的窗口中完成支付</p>
+        </div>
+      </el-dialog>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Wallet, ChatDotRound } from '@element-plus/icons-vue';
+import { Wallet, ChatDotRound, InfoFilled, Loading } from '@element-plus/icons-vue';
 import { getOrderPage, getOrderDetail, cancelOrder, confirmOrder, deleteOrder, payOrder } from '/@/api/order';
+import { createAlipayPayment, queryAlipayStatus } from '/@/api/payment';
+import { openAlipayPage, handlePaymentError, PAYMENT_STATUS } from '/@/utils/payment';
+import { ALIPAY_CONFIG, SANDBOX_ACCOUNTS } from '/@/config/alipay.config';
 
 const router = useRouter();
+const route = useRoute();
 
 // 订单列表
 const orderList = ref([]);
@@ -317,9 +405,14 @@ const currentOrder = ref(null);
 
 // 支付
 const payDialogVisible = ref(false);
-const payOrderData = ref({ orderId: null, amount: 0 });
+const payOrderData = ref({ orderId: null, amount: 0, orderNo: '' });
 const payMethod = ref('alipay');
 const paying = ref(false);
+const alipayHelpVisible = ref(false);
+const payLoadingVisible = ref(false);
+const payWindow = ref(null);
+const statusCheckTimer = ref(null);
+const currentPayOrder = ref(null);
 
 // 格式化价格
 const formatPrice = (price) => {
@@ -422,12 +515,70 @@ const viewDetail = async (order) => {
 
 // 支付订单
 const handlePay = (order) => {
-  payOrderData.value = { orderId: order.id, amount: order.payAmount };
+  payOrderData.value = { orderId: order.id, amount: order.payAmount, orderNo: order.orderNo };
+  currentPayOrder.value = order;
   payDialogVisible.value = true;
+};
+
+// 显示支付宝帮助
+const showAlipayHelp = () => {
+  alipayHelpVisible.value = true;
 };
 
 // 提交支付
 const submitPay = async () => {
+  if (payMethod.value === 'alipay') {
+    await submitAlipayPay();
+  } else {
+    await submitMockPay();
+  }
+};
+
+// 支付宝支付
+const submitAlipayPay = async () => {
+  paying.value = true;
+  payDialogVisible.value = false;
+  payLoadingVisible.value = true;
+
+  try {
+    const payData = {
+      orderNo: payOrderData.value.orderNo,
+      amount: payOrderData.value.amount,
+      subject: `订单${payOrderData.value.orderNo}`,
+      body: `购买商品`,
+      returnUrl: `${window.location.origin}/#/shop/order/pay/return`,
+      notifyUrl: ALIPAY_CONFIG.NOTIFY_URL
+    };
+
+    const res = await createAlipayPayment(payData);
+
+    if (res.code === 200 && res.data) {
+      const payUrl = res.data.payUrl || res.data;
+
+      // 打开支付宝支付窗口
+      payWindow.value = openAlipayPage(payUrl);
+
+      if (payWindow.value) {
+        // 监听窗口关闭，关闭后再查询支付状态
+        watchPayWindow();
+      } else {
+        ElMessage.warning('支付窗口被拦截，请允许弹出窗口后重试');
+      }
+    } else {
+      throw new Error(res.message || '创建支付订单失败');
+    }
+  } catch (error) {
+    console.error('发起支付失败:', error);
+    const errorInfo = handlePaymentError(error);
+    ElMessage.error(errorInfo.message);
+  } finally {
+    paying.value = false;
+    payLoadingVisible.value = false;
+  }
+};
+
+// 模拟支付（用于测试）
+const submitMockPay = async () => {
   paying.value = true;
   try {
     const res = await payOrder(payOrderData.value.orderId, payMethod.value);
@@ -443,6 +594,98 @@ const submitPay = async () => {
     ElMessage.error('支付失败');
   } finally {
     paying.value = false;
+  }
+};
+
+// 监听支付窗口
+const watchPayWindow = () => {
+  if (!payWindow.value) return;
+
+  const checkClosed = setInterval(() => {
+    if (payWindow.value && payWindow.value.closed) {
+      clearInterval(checkClosed);
+      // 窗口关闭后开始轮询支付状态
+      ElMessage.info('正在查询支付结果，请稍候...');
+      startStatusPolling();
+    }
+  }, 1000);
+};
+
+// 开始轮询支付状态
+const startStatusPolling = () => {
+  // 清理之前的定时器
+  if (statusCheckTimer.value) {
+    clearInterval(statusCheckTimer.value);
+  }
+
+  let attempts = 0;
+  const maxAttempts = 30; // 最多查询30次（90秒）
+
+  // 立即查询一次
+  checkPaymentStatus();
+
+  statusCheckTimer.value = setInterval(async () => {
+    attempts++;
+
+    if (attempts > maxAttempts) {
+      clearInterval(statusCheckTimer.value);
+      ElMessage.warning('支付状态查询超时，请稍后手动刷新订单状态');
+      payLoadingVisible.value = false;
+      return;
+    }
+
+    await checkPaymentStatus();
+  }, 3000);
+};
+
+// 查询支付状态
+const checkPaymentStatus = async () => {
+  try {
+    const res = await queryAlipayStatus(payOrderData.value.orderNo);
+
+    if (res.code === 200 && res.data) {
+      const status = res.data.status;
+
+      // 支付成功
+      if (status === 'paid' || status === 'success' || status === 'TRADE_SUCCESS') {
+        clearInterval(statusCheckTimer.value);
+
+        // 调用后端API更新订单支付状态
+        try {
+          const payRes = await payOrder(currentPayOrder.value.id, 'alipay');
+          if (payRes.code === 200) {
+            ElMessage.success('支付成功！');
+          } else {
+            ElMessage.warning('支付状态已确认，但订单更新失败，请刷新页面查看');
+          }
+        } catch (payError) {
+          console.error('更新订单支付状态失败:', payError);
+          ElMessage.warning('支付成功，但订单状态更新失败，请手动刷新');
+        }
+
+        payLoadingVisible.value = false;
+        loadOrders();
+        return;
+      }
+
+      // 支付失败或取消
+      if (status === 'failed' || status === 'error' || status === 'closed' || status === 'FAILED') {
+        clearInterval(statusCheckTimer.value);
+        payLoadingVisible.value = false;
+        ElMessage.error(res.data.message || '支付失败或已取消');
+        return;
+      }
+
+      // 交易不存在 - 用户还未完成支付，继续等待
+      if (status === 'unknown' || res.data.message?.includes('交易不存在')) {
+        // 继续轮询，不显示错误
+        console.log('交易尚未生成，继续等待用户支付...');
+        return;
+      }
+    }
+  } catch (error) {
+    console.error('查询支付状态失败:', error);
+    // 查询失败不中断轮询，继续尝试
   }
 };
 
@@ -525,6 +768,27 @@ const goToProduct = (productId) => {
 
 onMounted(() => {
   loadOrders();
+
+  // 检查是否有支付重试参数
+  const retryOrderNo = route.query.retry;
+  if (retryOrderNo) {
+    const order = orderList.value.find(o => o.orderNo === retryOrderNo);
+    if (order && order.status === 'pending') {
+      handlePay(order);
+    }
+  }
+});
+
+onUnmounted(() => {
+  // 清理定时器
+  if (statusCheckTimer.value) {
+    clearInterval(statusCheckTimer.value);
+  }
+
+  // 关闭支付窗口
+  if (payWindow.value && !payWindow.value.closed) {
+    payWindow.value.close();
+  }
 });
 </script>
 
@@ -786,22 +1050,144 @@ onMounted(() => {
       color: #606266;
     }
 
-    .el-radio {
+    .pay-method-group {
       display: flex;
-      align-items: center;
-      margin-bottom: 15px;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .pay-method-radio {
+      margin: 0;
+      height: auto;
+      padding: 12px;
+      border: 1px solid #e4e7ed;
+      border-radius: 8px;
+      transition: all 0.3s;
+
+      &:hover {
+        border-color: #c0c4cc;
+      }
+
+      &.is-checked {
+        border-color: #1677FF;
+        background: #f0f7ff;
+      }
 
       .pay-method-item {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-left: 10px;
+        gap: 12px;
+        margin-left: 8px;
 
-        .el-icon {
-          font-size: 24px;
+        .method-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          background: #f5f7fa;
+          border-radius: 8px;
+        }
+
+        .method-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .method-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #303133;
+          }
+
+          .method-desc {
+            font-size: 12px;
+            color: #909399;
+          }
+        }
+
+        .method-tag {
+          margin-left: auto;
         }
       }
     }
+  }
+
+  .alipay-tips {
+    margin-top: 15px;
+
+    .tips-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+
+      .el-icon {
+        color: #1677FF;
+      }
+
+      .el-button {
+        margin-left: auto;
+      }
+    }
+
+    .tips-content {
+      p {
+        margin: 4px 0;
+        font-size: 13px;
+        color: #606266;
+      }
+    }
+  }
+}
+
+// 支付宝帮助内容
+.alipay-help-content {
+  h4 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    color: #303133;
+  }
+
+  .account-info {
+    margin-bottom: 20px;
+  }
+
+  .pay-steps {
+    margin: 15px 0;
+  }
+}
+
+// 支付加载
+.pay-loading-content {
+  text-align: center;
+  padding: 30px 0;
+
+  .loading-icon {
+    color: #1677FF;
+    animation: rotate 1s linear infinite;
+  }
+
+  .loading-text {
+    margin-top: 15px;
+    font-size: 16px;
+    color: #303133;
+  }
+
+  .loading-tips {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #909399;
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -812,6 +1198,14 @@ onMounted(() => {
       flex-direction: column;
       gap: 15px;
       align-items: flex-start;
+    }
+  }
+
+  .pay-method-radio {
+    .pay-method-item {
+      .method-tag {
+        display: none;
+      }
     }
   }
 }

@@ -5,6 +5,7 @@ import request from '/@/utils/request';
  * 登录api接口集合
  * @method signIn 用户登录
  * @method signOut 用户退出登录
+ * @method signUp 用户注册
  */
 export function useLoginApi() {
     return {
@@ -18,6 +19,13 @@ export function useLoginApi() {
         signOut: (data) => {
             return request({
                 url: '/api/user/logout',
+                method: 'post',
+                data,
+            });
+        },
+        signUp: (data) => {
+            return request({
+                url: '/api/user/register',
                 method: 'post',
                 data,
             });

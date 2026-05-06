@@ -35,8 +35,9 @@
 							<el-upload
 								ref="uploadFile"
 								class="avatar-uploader"
-								action="http://localhost:9999/files/upload"
+								action="#"
 								:show-file-list="false"
+								:http-request="customUpload"
 								:on-success="handleAvatarSuccess"
 							>
 								<img v-if="imageUrl" :src="imageUrl" class="avatar">
@@ -62,6 +63,7 @@ import type { UploadInstance, UploadProps } from 'element-plus';
 import { ElMessage } from 'element-plus';
 import { Plus } from '@element-plus/icons-vue';
 import { useDiseaseApi } from '/@/api/disease';
+import request from '/@/utils/request';
 const diseaseApi = useDiseaseApi();
 
 // 定义子组件向父组件传值/事件
@@ -190,6 +192,32 @@ const onSubmit = () => {
 const handleAvatarSuccess: UploadProps['onSuccess'] = (response, uploadFile) => {
 	imageUrl.value = URL.createObjectURL(uploadFile.raw!);
 	state.form.images = response.data;
+};
+
+// 自定义上传方法，使用request拦截器携带token
+const customUpload = async (options: any) => {
+	const { file, onSuccess, onError } = options;
+	const formData = new FormData();
+	formData.append('file', file);
+	
+	try {
+		const response = await request({
+			url: '/api/files/upload',
+			method: 'post',
+			data: formData,
+			headers: {
+				'Content-Type': 'multipart/form-data'
+			}
+		});
+		
+		if (response.code === 200 || response.code === '200' || response.code === 0) {
+			onSuccess(response);
+		} else {
+			onError(new Error(response.msg || '上传失败'));
+		}
+	} catch (error) {
+		onError(error);
+	}
 };
 
 // 暴露变量

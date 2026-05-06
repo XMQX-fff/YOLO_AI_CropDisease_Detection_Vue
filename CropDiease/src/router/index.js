@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Login from '../views/login/index.vue';
+import Register from '../views/login/register.vue';
 import HomePage from '../views/homePage/index.vue';
 import DataView from '../views/dataView/index.vue';
 import InfoGreenhouse from '../views/infoGreenhouse/index.vue';
@@ -18,6 +19,7 @@ import Shop from '../views/purchaseManage/shop.vue';
 import ShopCart from '../views/purchaseManage/shopCart.vue';
 import ShopOrder from '../views/purchaseManage/shopOrder.vue';
 import ShopFavorite from '../views/purchaseManage/shopFavorite.vue';
+import PayReturn from '../views/purchaseManage/payment/PayReturn.vue';
 import SupplyManage from '../views/supplyManage/index.vue';
 import ProductManage from '../views/supplyManage/productManage.vue';
 import OrderManage from '../views/supplyManage/orderManage.vue';
@@ -52,6 +54,14 @@ const routes = [
         }
     },
     {
+        path: '/register',
+        name: 'Register',
+        component: Register,
+        meta: {
+            title: '用户注册'
+        }
+    },
+    {
         path: '/dataView',
         name: 'DataView',
         component: DataView,
@@ -72,7 +82,8 @@ const routes = [
         name: 'InfoGreenhouseOverview',
         component: InfoGreenhouseOverview,
         meta: {
-            title: '总览大屏'
+            title: '总览大屏',
+            requireAdmin: true
         }
     },
     {
@@ -228,6 +239,14 @@ const routes = [
         }
     },
     {
+        path: '/shop/order/pay/return',
+        name: 'PayReturn',
+        component: PayReturn,
+        meta: {
+            title: '支付结果'
+        }
+    },
+    {
         path: '/supplyManage',
         name: 'SupplyManage',
         component: SupplyManage,
@@ -331,7 +350,7 @@ const router = createRouter({
     routes
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
     // 设置页面标题
     document.title = to.meta.title || '农业中国';
 
@@ -366,8 +385,7 @@ router.beforeEach((to, from, next) => {
         const isAllowed = supplierAllowedPaths.some(path => to.path.startsWith(path));
         if (!isAllowed) {
             console.log('路由守卫 - 供应商无权访问该页面，跳转到供应管理');
-            next('/supplyManage');
-            return;
+            return '/supplyManage';
         }
     }
 
@@ -376,14 +394,13 @@ router.beforeEach((to, from, next) => {
         if (user) {
             // 管理员角色为 'admin' 
             if (isAdmin) {
-                next();
+                return true;
             } else {
-                next('/');
+                return '/';
             }
         } else {
-            next('/login');
+            return '/login';
         }
-        return;
     }
 
     // 检查管理员或供应商权限
@@ -391,18 +408,17 @@ router.beforeEach((to, from, next) => {
         if (user) {
             console.log('路由守卫 - isAdmin:', isAdmin, 'isSupplier:', isSupplier);
             if (isAdmin || isSupplier) {
-                next();
+                return true;
             } else {
-                next('/');
+                return '/';
             }
         } else {
             console.log('路由守卫 - 用户未登录，跳转到登录页');
-            next('/login');
+            return '/login';
         }
-        return;
     }
 
-    next();
+    return true;
 });
 
 export default router;

@@ -135,7 +135,14 @@
                 :src="row.mainImage || '/images/default-product.jpg'"
                 class="product-thumb"
                 fit="cover"
-              />
+                @error="handleImageError"
+              >
+                <template #error>
+                  <div class="image-error">
+                    <el-icon><Picture /></el-icon>
+                  </div>
+                </template>
+              </el-image>
               <div class="product-detail">
                 <div class="product-name">{{ row.productName }}</div>
                 <div class="product-subtitle" v-if="row.subTitle">{{ row.subTitle }}</div>
@@ -480,7 +487,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
-  Plus, Goods, CircleCheck, CircleClose, Search, Edit, View, Delete, Warning, Bell
+  Plus, Goods, CircleCheck, CircleClose, Search, Edit, View, Delete, Warning, Bell, Picture
 } from '@element-plus/icons-vue';
 // 使用供应商专用接口
 import {
@@ -771,6 +778,11 @@ const resetForm = () => {
   imageList.value = [];
 };
 
+// 图片加载失败处理
+const handleImageError = (e) => {
+  console.error('图片加载失败:', e);
+};
+
 // 生命周期
 onMounted(() => {
   loadCategories();
@@ -998,6 +1010,17 @@ onMounted(() => {
       border: 1px solid #e4e7ed;
       cursor: pointer;
     }
+  }
+
+  .image-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: #f5f7fa;
+    color: #909399;
+    font-size: 20px;
   }
 }
 </style>

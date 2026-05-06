@@ -171,3 +171,31 @@ export function toggleCategoryStatus(id, isShow) {
     params: { isShow }
   })
 }
+
+// ========== 供应商订单管理接口 ==========
+
+// 获取供应商订单列表（查询包含供应商商品的订单）
+export function getSupplierOrderPage(pageNum = 1, pageSize = 10, status) {
+  return request({
+    url: '/api/supplier/order/page',
+    method: 'get',
+    params: { pageNum, pageSize, status }
+  })
+}
+
+// 获取供应商订单详情
+export function getSupplierOrderDetail(orderId) {
+  return request({
+    url: `/api/supplier/order/${orderId}`,
+    method: 'get'
+  })
+}
+
+// 供应商发货
+export function supplierShipOrder(orderId, trackingNo, logisticsCompany) {
+  return request({
+    url: `/api/supplier/order/${orderId}/ship`,
+    method: 'put',
+    params: { trackingNo, logisticsCompany }
+  })
+}
