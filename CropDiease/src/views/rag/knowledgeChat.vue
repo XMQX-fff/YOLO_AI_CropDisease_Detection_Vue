@@ -20,7 +20,9 @@
                   {{ message.content }}
                 </div>
                 <div v-else>
-                  <div class="text" v-html="renderMarkdown(message.content)"></div>
+                  <!-- 流式传输中使用纯文本，完成后使用 Markdown 渲染 -->
+                  <div class="text" v-if="loading && index === messages.length - 1">{{ message.content }}</div>
+                  <div class="text" v-else v-html="renderMarkdown(message.content)"></div>
                   <!-- 来源文档 -->
                   <div v-if="message.sources && message.sources.length > 0" class="sources-section">
                     <div class="sources-title" @click="toggleSources(index)">
@@ -34,7 +36,7 @@
                       <div v-for="(source, sIndex) in message.sources" :key="sIndex" class="source-item">
                         <div class="source-header">
                           <span class="source-name">{{ source.documentName }}</span>
-                          <el-tag size="small" type="success">相似度: {{ ((1 - source.metadata.distance) * 100).toFixed(2) }}%</el-tag>
+                          <el-tag size="small" type="success">相似度: {{ (source.score * 100).toFixed(2) }}%</el-tag>
                         </div>
                         <div class="source-content">{{ source.content }}</div>
                       </div>
@@ -72,23 +74,6 @@
 
       <!-- 右侧设置面板 -->
       <div class="chat-sidebar">
-        <div class="sidebar-section">
-          <h4>检索设置</h4>
-          <div class="setting-item">
-            <label>返回文档数</label>
-            <el-slider v-model="settings.topK" :min="1" :max="10" :step="1" show-stops />
-            <span class="setting-value">{{ settings.topK }}</span>
-          </div>
-          <div class="setting-item">
-            <label>相似度阈值</label>
-            <el-slider v-model="settings.similarityThreshold" :min="0" :max="1" :step="0.1" show-stops />
-            <span class="setting-value">{{ settings.similarityThreshold }}</span>
-          </div>
-          <div class="setting-item">
-            <el-checkbox v-model="settings.includeSources">显示参考来源</el-checkbox>
-          </div>
-        </div>
-
         <div class="sidebar-section">
           <h4>使用提示</h4>
           <ul class="tips-list">
@@ -157,35 +142,56 @@ const messages = ref<Message[]>([
 
 const settings = ref({
   topK: 5,
-  similarityThreshold: 0.7,
+  similarityThreshold: 0.5,
   includeSources: true
 });
 
 const quickQuestions = [
-  '如何防治水稻稻瘟病？',
-  '番茄种植的最佳温度是多少？',
-  '苹果树常见病虫害有哪些？',
-  '温室大棚如何控制湿度？',
-  '有机肥料的使用方法'
+  '请举例几个常见的柑橘树病虫害',
+  '如何确诊葡萄树病虫害',
+  '麦类病虫害有哪些危害'
 ];
 
 const renderMarkdown = (text: string): string => {
   if (!text) return '';
 
-  text = text.replace(/^### (.*$)/gim, '<h3 class="markdown-h3">$1</h3>');
-  text = text.replace(/^## (.*$)/gim, '<h2 class="markdown-h2">$1</h2>');
-  text = text.replace(/^# (.*$)/gim, '<h1 class="markdown-h1">$1</h1>');
+  // 将文本按行处理，避免流式传输中的不完整内容被错误包装
+  let result = text;
 
-  text = text.replace(/\*\*(.*?)\*\*/gim, '<strong class="markdown-bold">$1</strong>');
+  // 处理标题（确保是行首的 #）
+  result = result.replace(/^### (.*$)/gim, '<h3 class="markdown-h3">$1</h3>');
+  result = result.replace(/^## (.*$)/gim, '<h2 class="markdown-h2">$1</h2>');
+  result = result.replace(/^# (.*$)/gim, '<h1 class="markdown-h1">$1</h1>');
 
-  text = text.replace(/^\s*\-\s+(.*$)/gim, '<li class="markdown-list-item">$1</li>');
-  text = text.replace(/(<li class="markdown-list-item">[\s\S]*?<\/li>)/gim, '<ul class="markdown-list">$1</ul>');
+  // 处理粗体
+  result = result.replace(/\*\*(.*?)\*\*/gim, '<strong class="markdown-bold">$1</strong>');
 
-  text = text.replace(/`(.*?)`/gim, '<code class="markdown-code">$1</code>');
+  // 处理列表项（确保是行首的 - 或数字）
+  result = result.replace(/^\s*[-*]\s+(.*$)/gim, '<li class="markdown-list-item">$1</li>');
+  result = result.replace(/^(\d+)\.\s+(.*$)/gim, '<li class="markdown-list-item" value="$1">$2</li>');
 
-  text = text.replace(/^(?!<h[1-6]>)(?!<li>)(?!<ul>)(?!<code>)(.*$)/gim, '<p class="markdown-paragraph">$1</p>');
+  // 将连续的列表项包装在 ul 中
+  result = result.replace(/(<li class="markdown-list-item"[^>]*>[\s\S]*?<\/li>\n?)+/gim, (match) => {
+    return '<ul class="markdown-list">' + match + '</ul>';
+  });
 
-  return text;
+  // 处理行内代码
+  result = result.replace(/`([^`]+)`/gim, '<code class="markdown-code">$1</code>');
+
+  // 处理段落 - 只对未被包裹的行进行包装
+  // 使用更保守的策略：只包装纯文本行（不以 < 开头，不是空行）
+  const lines = result.split('\n');
+  const processedLines = lines.map(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return '';
+    // 如果已经被 HTML 标签包裹，或者包含 HTML 标签，则不处理
+    if (/^<[a-zA-Z][^>]*>/.test(trimmed) || /<[a-zA-Z][^>]*>/.test(line)) {
+      return line;
+    }
+    return '<p class="markdown-paragraph">' + line + '</p>';
+  });
+
+  return processedLines.join('\n');
 };
 
 const toggleSources = (index: number) => {
@@ -195,6 +201,19 @@ const toggleSources = (index: number) => {
 const useQuickQuestion = (question: string) => {
   userInput.value = question;
   sendMessage();
+};
+
+// 中止控制器
+let streamController = null;
+// 内容缓冲区，用于优化流式显示
+let contentBuffer = '';
+let bufferTimer = null;
+
+const flushBuffer = (index: number) => {
+  if (contentBuffer && messages.value[index]) {
+    messages.value[index].content += contentBuffer;
+    contentBuffer = '';
+  }
 };
 
 const sendMessage = async () => {
@@ -208,9 +227,24 @@ const sendMessage = async () => {
 
   userInput.value = '';
   loading.value = true;
+  contentBuffer = '';
 
   await nextTick();
   scrollToBottom();
+
+  // 添加一个空的助手消息用于流式显示
+  const assistantMessageIndex = messages.value.length;
+  messages.value.push({
+    role: 'assistant',
+    content: '',
+    sources: [],
+    showSources: false
+  });
+
+  // 设置定时刷新缓冲区
+  bufferTimer = setInterval(() => {
+    flushBuffer(assistantMessageIndex);
+  }, 100);
 
   try {
     const request: RagQueryRequest = {
@@ -220,39 +254,55 @@ const sendMessage = async () => {
       includeSources: settings.value.includeSources
     };
 
-    const res: any = await ragApi.query(request);
-
-    if (res.code === 200) {
-      const response = res.data;
-      messages.value.push({
-        role: 'assistant',
-        content: response.answer,
-        sources: response.sources || [],
-        showSources: false
-      });
-    } else {
-      ElMessage.error(res.message || '获取回答失败');
-      messages.value.push({
-        role: 'assistant',
-        content: '抱歉，获取回答时出现错误，请稍后重试。',
-        sources: [],
-        showSources: false
-      });
-    }
+    // 使用流式接口
+    streamController = ragApi.queryStream(
+      request,
+      (data) => {
+        // 收到流数据
+        if (data.type === 'content') {
+          // 累积到缓冲区而不是直接更新
+          contentBuffer += data.content;
+        } else if (data.type === 'sources') {
+          // 先刷新缓冲区，确保内容已更新
+          flushBuffer(assistantMessageIndex);
+          messages.value[assistantMessageIndex].sources = data.sources || [];
+        }
+      },
+      (error) => {
+        // 流式传输错误
+        console.error('流式传输错误:', error);
+        if (bufferTimer) {
+          clearInterval(bufferTimer);
+          bufferTimer = null;
+        }
+        flushBuffer(assistantMessageIndex);
+        ElMessage.error('获取回答失败');
+        messages.value[assistantMessageIndex].content += '抱歉，获取回答时出现错误，请稍后重试。';
+        loading.value = false;
+      },
+      () => {
+        // 流式传输完成
+        if (bufferTimer) {
+          clearInterval(bufferTimer);
+          bufferTimer = null;
+        }
+        flushBuffer(assistantMessageIndex);
+        loading.value = false;
+        nextTick(() => {
+          scrollToBottom();
+        });
+      }
+    );
   } catch (error) {
     console.error('问答请求失败:', error);
+    if (bufferTimer) {
+      clearInterval(bufferTimer);
+      bufferTimer = null;
+    }
+    flushBuffer(assistantMessageIndex);
     ElMessage.error('请求失败');
-    messages.value.push({
-      role: 'assistant',
-      content: '抱歉，网络请求出现错误，请检查网络连接后重试。',
-      sources: [],
-      showSources: false
-    });
-  } finally {
+    messages.value[assistantMessageIndex].content += '抱歉，网络请求出现错误，请检查网络连接后重试。';
     loading.value = false;
-    nextTick(() => {
-      scrollToBottom();
-    });
   }
 };
 
